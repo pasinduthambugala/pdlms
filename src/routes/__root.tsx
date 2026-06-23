@@ -43,10 +43,10 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "PDLMS — Physical Document Lifecycle" },
+      { title: "DARMS — Physical Document Lifecycle" },
       { name: "description", content: "Manage physical document storage, retrieval, disposal and costs." },
-      { property: "og:title", content: "PDLMS — Physical Document Lifecycle" },
-      { name: "twitter:title", content: "PDLMS — Physical Document Lifecycle" },
+      { property: "og:title", content: "DARMS — Physical Document Lifecycle" },
+      { name: "twitter:title", content: "DARMS — Physical Document Lifecycle" },
       { property: "og:description", content: "Manage physical document storage, retrieval, disposal and costs." },
       { name: "twitter:description", content: "Manage physical document storage, retrieval, disposal and costs." },
       { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/06a420e1-b18b-440a-96fc-7ebf917f5110/id-preview-d9ad19a6--b7f20078-ac1c-4d0d-8ef2-961176afac4e.lovable.app-1782194948952.png" },

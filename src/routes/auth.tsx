@@ -8,7 +8,7 @@ import { Card } from "@/components/ui/card";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/auth")({
-  head: () => ({ meta: [{ title: "Sign in — PDLMS" }] }),
+  head: () => ({ meta: [{ title: "Sign in — DARMS" }] }),
   component: AuthPage,
 });
 
@@ -52,7 +52,7 @@ function AuthPage() {
     <div className="min-h-screen flex items-center justify-center bg-slate-50 px-4">
       <Card className="w-full max-w-md p-8">
         <div className="mb-6 text-center">
-          <h1 className="text-2xl font-bold text-slate-900">PDLMS</h1>
+          <h1 className="text-2xl font-bold text-slate-900">DARMS</h1>
           <p className="text-sm text-slate-500 mt-1">
             Physical Document Lifecycle Management
           </p>

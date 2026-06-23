@@ -30,7 +30,7 @@ export const Route = createFileRoute("/api/public/hooks/disposal-alerts")({
 
         let alerts = 0;
         for (const [deptId, { name, carts: list }] of groups) {
-          const subject = `PDLMS disposal alert — ${name} (${list.length} cart${list.length === 1 ? "" : "s"})`;
+          const subject = `DARMS disposal alert — ${name} (${list.length} cart${list.length === 1 ? "" : "s"})`;
           const body =
             `The following carts will reach disposal within 14 days:\n\n` +
             list.map((c) => `- ${c.cart_number} (disposal ${c.disposal_date})`).join("\n");

@@ -31,7 +31,7 @@ export const Route = createFileRoute("/api/public/hooks/storage-notification")({
         let sent = 0;
 
         for (const [deptId, { name, carts }] of groups) {
-          const subject = `PDLMS storage pickup — ${name} (${carts.length} cart${carts.length === 1 ? "" : "s"})`;
+          const subject = `DARMS storage pickup — ${name} (${carts.length} cart${carts.length === 1 ? "" : "s"})`;
           const body =
             `Department: ${name}\n\nCarts ready for storage:\n` +
             carts.map((c) => `- ${c.cart_number} (retention ${c.retention_days}d, disposal ${c.disposal_date})`).join("\n");

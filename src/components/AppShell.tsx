@@ -51,7 +51,7 @@ export function AppShell({ children }: { children: ReactNode }) {
     <div className="min-h-screen flex w-full bg-slate-50">
       <aside className="w-64 bg-white border-r border-slate-200 flex flex-col">
         <div className="px-5 py-5 border-b border-slate-200">
-          <div className="text-xl font-bold text-slate-900">PDLMS</div>
+          <div className="text-xl font-bold text-slate-900">DARMS</div>
           <div className="text-xs text-slate-500 mt-0.5">Document Lifecycle</div>
         </div>
         <nav className="flex-1 px-3 py-4 space-y-1 overflow-auto">

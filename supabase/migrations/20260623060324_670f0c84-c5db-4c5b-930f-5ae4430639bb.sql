@@ -1,6 +1,6 @@
 
 -- =========================================================================
--- PDLMS SCHEMA
+-- DARMS SCHEMA
 -- =========================================================================
 
 CREATE TYPE public.app_role AS ENUM ('super_admin','employee','dept_head','office_services');
