@@ -12,9 +12,14 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AuthenticatedSearchRouteImport } from './routes/_authenticated/search'
+import { Route as AuthenticatedRetrievalsRouteImport } from './routes/_authenticated/retrievals'
+import { Route as AuthenticatedDocumentsRouteImport } from './routes/_authenticated/documents'
+import { Route as AuthenticatedDisposalRouteImport } from './routes/_authenticated/disposal'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedCartsRouteImport } from './routes/_authenticated/carts'
 import { Route as AuthenticatedCartsNewRouteImport } from './routes/_authenticated/carts.new'
+import { Route as AuthenticatedCartsCartIdRouteImport } from './routes/_authenticated/carts.$cartId'
 
 const AuthRoute = AuthRouteImport.update({
   id: '/auth',
@@ -29,6 +34,26 @@ const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedSearchRoute = AuthenticatedSearchRouteImport.update({
+  id: '/search',
+  path: '/search',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedRetrievalsRoute = AuthenticatedRetrievalsRouteImport.update({
+  id: '/retrievals',
+  path: '/retrievals',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedDocumentsRoute = AuthenticatedDocumentsRouteImport.update({
+  id: '/documents',
+  path: '/documents',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedDisposalRoute = AuthenticatedDisposalRouteImport.update({
+  id: '/disposal',
+  path: '/disposal',
+  getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
   id: '/dashboard',
@@ -45,12 +70,23 @@ const AuthenticatedCartsNewRoute = AuthenticatedCartsNewRouteImport.update({
   path: '/new',
   getParentRoute: () => AuthenticatedCartsRoute,
 } as any)
+const AuthenticatedCartsCartIdRoute =
+  AuthenticatedCartsCartIdRouteImport.update({
+    id: '/$cartId',
+    path: '/$cartId',
+    getParentRoute: () => AuthenticatedCartsRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/carts': typeof AuthenticatedCartsRouteWithChildren
   '/dashboard': typeof AuthenticatedDashboardRoute
+  '/disposal': typeof AuthenticatedDisposalRoute
+  '/documents': typeof AuthenticatedDocumentsRoute
+  '/retrievals': typeof AuthenticatedRetrievalsRoute
+  '/search': typeof AuthenticatedSearchRoute
+  '/carts/$cartId': typeof AuthenticatedCartsCartIdRoute
   '/carts/new': typeof AuthenticatedCartsNewRoute
 }
 export interface FileRoutesByTo {
@@ -58,6 +94,11 @@ export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
   '/carts': typeof AuthenticatedCartsRouteWithChildren
   '/dashboard': typeof AuthenticatedDashboardRoute
+  '/disposal': typeof AuthenticatedDisposalRoute
+  '/documents': typeof AuthenticatedDocumentsRoute
+  '/retrievals': typeof AuthenticatedRetrievalsRoute
+  '/search': typeof AuthenticatedSearchRoute
+  '/carts/$cartId': typeof AuthenticatedCartsCartIdRoute
   '/carts/new': typeof AuthenticatedCartsNewRoute
 }
 export interface FileRoutesById {
@@ -67,13 +108,38 @@ export interface FileRoutesById {
   '/auth': typeof AuthRoute
   '/_authenticated/carts': typeof AuthenticatedCartsRouteWithChildren
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
+  '/_authenticated/disposal': typeof AuthenticatedDisposalRoute
+  '/_authenticated/documents': typeof AuthenticatedDocumentsRoute
+  '/_authenticated/retrievals': typeof AuthenticatedRetrievalsRoute
+  '/_authenticated/search': typeof AuthenticatedSearchRoute
+  '/_authenticated/carts/$cartId': typeof AuthenticatedCartsCartIdRoute
   '/_authenticated/carts/new': typeof AuthenticatedCartsNewRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/auth' | '/carts' | '/dashboard' | '/carts/new'
+  fullPaths:
+    | '/'
+    | '/auth'
+    | '/carts'
+    | '/dashboard'
+    | '/disposal'
+    | '/documents'
+    | '/retrievals'
+    | '/search'
+    | '/carts/$cartId'
+    | '/carts/new'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/auth' | '/carts' | '/dashboard' | '/carts/new'
+  to:
+    | '/'
+    | '/auth'
+    | '/carts'
+    | '/dashboard'
+    | '/disposal'
+    | '/documents'
+    | '/retrievals'
+    | '/search'
+    | '/carts/$cartId'
+    | '/carts/new'
   id:
     | '__root__'
     | '/'
@@ -81,6 +147,11 @@ export interface FileRouteTypes {
     | '/auth'
     | '/_authenticated/carts'
     | '/_authenticated/dashboard'
+    | '/_authenticated/disposal'
+    | '/_authenticated/documents'
+    | '/_authenticated/retrievals'
+    | '/_authenticated/search'
+    | '/_authenticated/carts/$cartId'
     | '/_authenticated/carts/new'
   fileRoutesById: FileRoutesById
 }
@@ -113,6 +184,34 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated/search': {
+      id: '/_authenticated/search'
+      path: '/search'
+      fullPath: '/search'
+      preLoaderRoute: typeof AuthenticatedSearchRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/retrievals': {
+      id: '/_authenticated/retrievals'
+      path: '/retrievals'
+      fullPath: '/retrievals'
+      preLoaderRoute: typeof AuthenticatedRetrievalsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/documents': {
+      id: '/_authenticated/documents'
+      path: '/documents'
+      fullPath: '/documents'
+      preLoaderRoute: typeof AuthenticatedDocumentsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/disposal': {
+      id: '/_authenticated/disposal'
+      path: '/disposal'
+      fullPath: '/disposal'
+      preLoaderRoute: typeof AuthenticatedDisposalRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/dashboard': {
       id: '/_authenticated/dashboard'
       path: '/dashboard'
@@ -134,14 +233,23 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedCartsNewRouteImport
       parentRoute: typeof AuthenticatedCartsRoute
     }
+    '/_authenticated/carts/$cartId': {
+      id: '/_authenticated/carts/$cartId'
+      path: '/$cartId'
+      fullPath: '/carts/$cartId'
+      preLoaderRoute: typeof AuthenticatedCartsCartIdRouteImport
+      parentRoute: typeof AuthenticatedCartsRoute
+    }
   }
 }
 
 interface AuthenticatedCartsRouteChildren {
+  AuthenticatedCartsCartIdRoute: typeof AuthenticatedCartsCartIdRoute
   AuthenticatedCartsNewRoute: typeof AuthenticatedCartsNewRoute
 }
 
 const AuthenticatedCartsRouteChildren: AuthenticatedCartsRouteChildren = {
+  AuthenticatedCartsCartIdRoute: AuthenticatedCartsCartIdRoute,
   AuthenticatedCartsNewRoute: AuthenticatedCartsNewRoute,
 }
 
@@ -151,11 +259,19 @@ const AuthenticatedCartsRouteWithChildren =
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedCartsRoute: typeof AuthenticatedCartsRouteWithChildren
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
+  AuthenticatedDisposalRoute: typeof AuthenticatedDisposalRoute
+  AuthenticatedDocumentsRoute: typeof AuthenticatedDocumentsRoute
+  AuthenticatedRetrievalsRoute: typeof AuthenticatedRetrievalsRoute
+  AuthenticatedSearchRoute: typeof AuthenticatedSearchRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedCartsRoute: AuthenticatedCartsRouteWithChildren,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
+  AuthenticatedDisposalRoute: AuthenticatedDisposalRoute,
+  AuthenticatedDocumentsRoute: AuthenticatedDocumentsRoute,
+  AuthenticatedRetrievalsRoute: AuthenticatedRetrievalsRoute,
+  AuthenticatedSearchRoute: AuthenticatedSearchRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =

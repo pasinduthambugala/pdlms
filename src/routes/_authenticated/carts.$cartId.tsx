@@ -56,7 +56,7 @@ function CartDetail() {
   });
 
   const transition = useMutation({
-    mutationFn: async ({ status, action, extra }: { status: CartStatus; action: string; extra?: any }) => {
+    mutationFn: async ({ status, action, extra }: { status: CartStatus; action: any; extra?: any }) => {
       if (!user) throw new Error("not signed in");
       const updates: any = { status, ...(extra ?? {}) };
       const { error: uErr } = await supabase.from("carts").update(updates).eq("id", cartId);
