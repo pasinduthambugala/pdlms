@@ -18,8 +18,8 @@ import { Route as AuthenticatedDocumentsRouteImport } from './routes/_authentica
 import { Route as AuthenticatedDisposalRouteImport } from './routes/_authenticated/disposal'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedCostsRouteImport } from './routes/_authenticated/costs'
-import { Route as AuthenticatedCartsRouteImport } from './routes/_authenticated/carts'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
+import { Route as AuthenticatedCartsIndexRouteImport } from './routes/_authenticated/carts.index'
 import { Route as AuthenticatedCartsNewRouteImport } from './routes/_authenticated/carts.new'
 import { Route as AuthenticatedCartsCartIdRouteImport } from './routes/_authenticated/carts.$cartId'
 import { Route as ApiPublicHooksStorageNotificationRouteImport } from './routes/api/public/hooks/storage-notification'
@@ -69,26 +69,26 @@ const AuthenticatedCostsRoute = AuthenticatedCostsRouteImport.update({
   path: '/costs',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
-const AuthenticatedCartsRoute = AuthenticatedCartsRouteImport.update({
-  id: '/carts',
-  path: '/carts',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
 const AuthenticatedAdminRoute = AuthenticatedAdminRouteImport.update({
   id: '/admin',
   path: '/admin',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedCartsIndexRoute = AuthenticatedCartsIndexRouteImport.update({
+  id: '/carts/',
+  path: '/carts/',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedCartsNewRoute = AuthenticatedCartsNewRouteImport.update({
-  id: '/new',
-  path: '/new',
-  getParentRoute: () => AuthenticatedCartsRoute,
+  id: '/carts/new',
+  path: '/carts/new',
+  getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedCartsCartIdRoute =
   AuthenticatedCartsCartIdRouteImport.update({
-    id: '/$cartId',
-    path: '/$cartId',
-    getParentRoute: () => AuthenticatedCartsRoute,
+    id: '/carts/$cartId',
+    path: '/carts/$cartId',
+    getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const ApiPublicHooksStorageNotificationRoute =
   ApiPublicHooksStorageNotificationRouteImport.update({
@@ -107,7 +107,6 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/admin': typeof AuthenticatedAdminRoute
-  '/carts': typeof AuthenticatedCartsRouteWithChildren
   '/costs': typeof AuthenticatedCostsRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/disposal': typeof AuthenticatedDisposalRoute
@@ -116,6 +115,7 @@ export interface FileRoutesByFullPath {
   '/search': typeof AuthenticatedSearchRoute
   '/carts/$cartId': typeof AuthenticatedCartsCartIdRoute
   '/carts/new': typeof AuthenticatedCartsNewRoute
+  '/carts/': typeof AuthenticatedCartsIndexRoute
   '/api/public/hooks/disposal-alerts': typeof ApiPublicHooksDisposalAlertsRoute
   '/api/public/hooks/storage-notification': typeof ApiPublicHooksStorageNotificationRoute
 }
@@ -123,7 +123,6 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/admin': typeof AuthenticatedAdminRoute
-  '/carts': typeof AuthenticatedCartsRouteWithChildren
   '/costs': typeof AuthenticatedCostsRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/disposal': typeof AuthenticatedDisposalRoute
@@ -132,6 +131,7 @@ export interface FileRoutesByTo {
   '/search': typeof AuthenticatedSearchRoute
   '/carts/$cartId': typeof AuthenticatedCartsCartIdRoute
   '/carts/new': typeof AuthenticatedCartsNewRoute
+  '/carts': typeof AuthenticatedCartsIndexRoute
   '/api/public/hooks/disposal-alerts': typeof ApiPublicHooksDisposalAlertsRoute
   '/api/public/hooks/storage-notification': typeof ApiPublicHooksStorageNotificationRoute
 }
@@ -141,7 +141,6 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
   '/_authenticated/admin': typeof AuthenticatedAdminRoute
-  '/_authenticated/carts': typeof AuthenticatedCartsRouteWithChildren
   '/_authenticated/costs': typeof AuthenticatedCostsRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/disposal': typeof AuthenticatedDisposalRoute
@@ -150,6 +149,7 @@ export interface FileRoutesById {
   '/_authenticated/search': typeof AuthenticatedSearchRoute
   '/_authenticated/carts/$cartId': typeof AuthenticatedCartsCartIdRoute
   '/_authenticated/carts/new': typeof AuthenticatedCartsNewRoute
+  '/_authenticated/carts/': typeof AuthenticatedCartsIndexRoute
   '/api/public/hooks/disposal-alerts': typeof ApiPublicHooksDisposalAlertsRoute
   '/api/public/hooks/storage-notification': typeof ApiPublicHooksStorageNotificationRoute
 }
@@ -159,7 +159,6 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/admin'
-    | '/carts'
     | '/costs'
     | '/dashboard'
     | '/disposal'
@@ -168,6 +167,7 @@ export interface FileRouteTypes {
     | '/search'
     | '/carts/$cartId'
     | '/carts/new'
+    | '/carts/'
     | '/api/public/hooks/disposal-alerts'
     | '/api/public/hooks/storage-notification'
   fileRoutesByTo: FileRoutesByTo
@@ -175,7 +175,6 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/admin'
-    | '/carts'
     | '/costs'
     | '/dashboard'
     | '/disposal'
@@ -184,6 +183,7 @@ export interface FileRouteTypes {
     | '/search'
     | '/carts/$cartId'
     | '/carts/new'
+    | '/carts'
     | '/api/public/hooks/disposal-alerts'
     | '/api/public/hooks/storage-notification'
   id:
@@ -192,7 +192,6 @@ export interface FileRouteTypes {
     | '/_authenticated'
     | '/auth'
     | '/_authenticated/admin'
-    | '/_authenticated/carts'
     | '/_authenticated/costs'
     | '/_authenticated/dashboard'
     | '/_authenticated/disposal'
@@ -201,6 +200,7 @@ export interface FileRouteTypes {
     | '/_authenticated/search'
     | '/_authenticated/carts/$cartId'
     | '/_authenticated/carts/new'
+    | '/_authenticated/carts/'
     | '/api/public/hooks/disposal-alerts'
     | '/api/public/hooks/storage-notification'
   fileRoutesById: FileRoutesById
@@ -278,13 +278,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedCostsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/_authenticated/carts': {
-      id: '/_authenticated/carts'
-      path: '/carts'
-      fullPath: '/carts'
-      preLoaderRoute: typeof AuthenticatedCartsRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
     '/_authenticated/admin': {
       id: '/_authenticated/admin'
       path: '/admin'
@@ -292,19 +285,26 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/carts/': {
+      id: '/_authenticated/carts/'
+      path: '/carts'
+      fullPath: '/carts/'
+      preLoaderRoute: typeof AuthenticatedCartsIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/carts/new': {
       id: '/_authenticated/carts/new'
-      path: '/new'
+      path: '/carts/new'
       fullPath: '/carts/new'
       preLoaderRoute: typeof AuthenticatedCartsNewRouteImport
-      parentRoute: typeof AuthenticatedCartsRoute
+      parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/carts/$cartId': {
       id: '/_authenticated/carts/$cartId'
-      path: '/$cartId'
+      path: '/carts/$cartId'
       fullPath: '/carts/$cartId'
       preLoaderRoute: typeof AuthenticatedCartsCartIdRouteImport
-      parentRoute: typeof AuthenticatedCartsRoute
+      parentRoute: typeof AuthenticatedRouteRoute
     }
     '/api/public/hooks/storage-notification': {
       id: '/api/public/hooks/storage-notification'
@@ -323,39 +323,30 @@ declare module '@tanstack/react-router' {
   }
 }
 
-interface AuthenticatedCartsRouteChildren {
-  AuthenticatedCartsCartIdRoute: typeof AuthenticatedCartsCartIdRoute
-  AuthenticatedCartsNewRoute: typeof AuthenticatedCartsNewRoute
-}
-
-const AuthenticatedCartsRouteChildren: AuthenticatedCartsRouteChildren = {
-  AuthenticatedCartsCartIdRoute: AuthenticatedCartsCartIdRoute,
-  AuthenticatedCartsNewRoute: AuthenticatedCartsNewRoute,
-}
-
-const AuthenticatedCartsRouteWithChildren =
-  AuthenticatedCartsRoute._addFileChildren(AuthenticatedCartsRouteChildren)
-
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedAdminRoute: typeof AuthenticatedAdminRoute
-  AuthenticatedCartsRoute: typeof AuthenticatedCartsRouteWithChildren
   AuthenticatedCostsRoute: typeof AuthenticatedCostsRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedDisposalRoute: typeof AuthenticatedDisposalRoute
   AuthenticatedDocumentsRoute: typeof AuthenticatedDocumentsRoute
   AuthenticatedRetrievalsRoute: typeof AuthenticatedRetrievalsRoute
   AuthenticatedSearchRoute: typeof AuthenticatedSearchRoute
+  AuthenticatedCartsCartIdRoute: typeof AuthenticatedCartsCartIdRoute
+  AuthenticatedCartsNewRoute: typeof AuthenticatedCartsNewRoute
+  AuthenticatedCartsIndexRoute: typeof AuthenticatedCartsIndexRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAdminRoute: AuthenticatedAdminRoute,
-  AuthenticatedCartsRoute: AuthenticatedCartsRouteWithChildren,
   AuthenticatedCostsRoute: AuthenticatedCostsRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedDisposalRoute: AuthenticatedDisposalRoute,
   AuthenticatedDocumentsRoute: AuthenticatedDocumentsRoute,
   AuthenticatedRetrievalsRoute: AuthenticatedRetrievalsRoute,
   AuthenticatedSearchRoute: AuthenticatedSearchRoute,
+  AuthenticatedCartsCartIdRoute: AuthenticatedCartsCartIdRoute,
+  AuthenticatedCartsNewRoute: AuthenticatedCartsNewRoute,
+  AuthenticatedCartsIndexRoute: AuthenticatedCartsIndexRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =

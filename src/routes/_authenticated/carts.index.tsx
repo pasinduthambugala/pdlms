@@ -7,7 +7,7 @@ import { StatusBadge } from "@/components/StatusBadge";
 import { useCurrentUser } from "@/hooks/use-current-user";
 import { Plus } from "lucide-react";
 
-export const Route = createFileRoute("/_authenticated/carts")({
+export const Route = createFileRoute("/_authenticated/carts/")({
   component: CartsList,
 });
 
