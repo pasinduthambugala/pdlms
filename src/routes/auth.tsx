@@ -8,7 +8,8 @@ import { Card } from "@/components/ui/card";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/auth")({
-  head: () => ({ meta: [{ title: "Sign in — DARMS" }] }),
+  ssr: false,
+  head: () => ({ meta: [{ title: "Sign in — PDLMS" }] }),
   component: AuthPage,
 });
 
