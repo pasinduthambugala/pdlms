@@ -216,6 +216,10 @@ function RegisterDocDialog({ onDone }: { onDone: () => void }) {
         </div>
         <div className="grid grid-cols-2 gap-3">
           <div>
+            <Label>Registration Date</Label>
+            <Input value={regDate} onChange={(e) => setRegDate(e.target.value)} required />
+          </div>
+          <div>
             <Label>Document name</Label>
             <Input value={name} onChange={(e) => setName(e.target.value)} required />
           </div>
