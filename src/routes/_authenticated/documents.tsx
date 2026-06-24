@@ -154,6 +154,7 @@ function RegisterDocDialog({ onDone }: { onDone: () => void }) {
   const [retention, setRetention] = useState(365);
   const [fileNum, setFileNum] = useState("");
   const [fileName, setFileName] = useState("");
+  const [regDate, setRegDate] = useState("");
 
   const mut = useMutation({
     mutationFn: async () => {

@@ -1,0 +1,87 @@
+// Prisma schema for MariaDB
+// Mirrors the Supabase schema defined in supabase/schema.sql
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model Department {
+  id          String   @id @default(uuid())
+  name        String   @unique
+  created_at  DateTime @default(now())
+  carts       Cart[]
+  users       User[]
+}
+
+model Role {
+  id   String @id @default(uuid())
+  name String @unique
+  users User[]
+}
+
+model User {
+  id            String   @id @default(uuid())
+  email         String   @unique
+  password_hash String
+  department    Department @relation(fields: [departmentId], references: [id])
+  departmentId  String
+  role          Role @relation(fields: [roleId], references: [id])
+  roleId       String
+  is_active    Boolean @default(false)
+  created_at    DateTime @default(now())
+  // optional relations
+  carts         Cart[]
+  audit_logs   AuditLog[]
+}
+
+model Cart {
+  id          String   @id @default(uuid())
+  cart_number String
+  department   Department @relation(fields: [departmentId], references: [id])
+  departmentId String
+  status      String
+  created_at  DateTime @default(now())
+  updated_at  DateTime @updatedAt
+  documents   Document[]
+  @@unique([departmentId, cart_number])
+}
+
+model Document {
+  id               String   @id @default(uuid())
+  document_name    String
+  document_number  String   @unique
+  retention_period Int
+  cart             Cart @relation(fields: [cartId], references: [id])
+  cartId           String
+  file_number      String?
+  file_name        String?
+  created_at       DateTime @default(now())
+  updated_at       DateTime @updatedAt
+}
+
+model PurchaseOrder {
+  id          String   @id @default(uuid())
+  po_number   String   @unique
+  department   Department @relation(fields: [departmentId], references: [id])
+  departmentId String
+  category    String
+  amount      Float
+  created_at  DateTime @default(now())
+}
+
+model AuditLog {
+  id          String   @id @default(uuid())
+  user         User @relation(fields: [userId], references: [id])
+  userId       String
+  action       String
+  resource_type String
+  resource_id   String?
+  details       Json?
+  created_at    DateTime @default(now())
+}
