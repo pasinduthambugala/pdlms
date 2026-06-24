@@ -55,7 +55,7 @@ function DocsList() {
     <div>
       <header className="mb-6 flex items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">Document Registry</h1>
+          <h1 className="text-2xl font-bold text-slate-900">Document</h1>
           <p className="text-sm text-slate-500">All documents you have access to.</p>
         </div>
         <Dialog open={open} onOpenChange={setOpen}>
