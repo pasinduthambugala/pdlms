@@ -212,7 +212,7 @@ export type Database = {
       }
       documents: {
         Row: {
-          cart_id: string
+          cart_id: string | null
           created_at: string
           created_by: string
           department_id: string
@@ -221,10 +221,11 @@ export type Database = {
           file_name: string | null
           file_number: string | null
           id: string
+          registration_date: string | null
           retention_period: number
         }
         Insert: {
-          cart_id: string
+          cart_id?: string | null
           created_at?: string
           created_by: string
           department_id: string
@@ -233,10 +234,11 @@ export type Database = {
           file_name?: string | null
           file_number?: string | null
           id?: string
+          registration_date?: string | null
           retention_period: number
         }
         Update: {
-          cart_id?: string
+          cart_id?: string | null
           created_at?: string
           created_by?: string
           department_id?: string
@@ -245,6 +247,7 @@ export type Database = {
           file_name?: string | null
           file_number?: string | null
           id?: string
+          registration_date?: string | null
           retention_period?: number
         }
         Relationships: [

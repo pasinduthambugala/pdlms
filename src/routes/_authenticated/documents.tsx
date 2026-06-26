@@ -7,15 +7,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-  DialogFooter,
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter,
 } from "@/components/ui/dialog";
+import {
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+} from "@/components/ui/select";
 import { useCurrentUser } from "@/hooks/use-current-user";
-import { Plus, Search } from "lucide-react";
+import { Plus, Search, Pencil } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/documents")({
@@ -27,6 +25,7 @@ function DocsList() {
   const qc = useQueryClient();
   const [search, setSearch] = useState("");
   const [open, setOpen] = useState(false);
+  const [assignId, setAssignId] = useState<string | null>(null);
 
   const { data } = useQuery({
     queryKey: ["documents"],
@@ -55,7 +54,7 @@ function DocsList() {
     <div>
       <header className="mb-6 flex items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">Document</h1>
+          <h1 className="text-2xl font-bold text-slate-900">Documents</h1>
           <p className="text-sm text-slate-500">All documents you have access to.</p>
         </div>
         <Dialog open={open} onOpenChange={setOpen}>
@@ -95,6 +94,7 @@ function DocsList() {
               <th className="text-left px-4 py-3">Cart Number</th>
               <th className="text-left px-4 py-3">File Number</th>
               <th className="text-left px-4 py-3">File Name</th>
+              <th className="text-right px-4 py-3">Actions</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
@@ -105,21 +105,27 @@ function DocsList() {
                   <td className="px-4 py-3 font-mono text-xs">{d.document_number}</td>
                   <td className="px-4 py-3 text-slate-600">{d.retention_period} days</td>
                   <td className="px-4 py-3">
-                    <Link
-                      to="/carts/$cartId"
-                      params={{ cartId: d.cart_id }}
-                      className="text-slate-900 hover:underline"
-                    >
-                      {d.carts?.cart_number}
-                    </Link>
+                    {d.cart_id && d.carts ? (
+                      <Link to="/carts/$cartId" params={{ cartId: d.cart_id }}
+                        className="text-slate-900 hover:underline">
+                        {d.carts.cart_number}
+                      </Link>
+                    ) : (
+                      <span className="text-amber-700 text-xs">Unassigned</span>
+                    )}
                   </td>
                   <td className="px-4 py-3 text-slate-500">{d.file_number ?? "—"}</td>
                   <td className="px-4 py-3 text-slate-500">{d.file_name ?? "—"}</td>
+                  <td className="px-4 py-3 text-right">
+                    <Button size="sm" variant="ghost" onClick={() => setAssignId(d.id)}>
+                      <Pencil className="w-4 h-4 mr-1" /> Update cart
+                    </Button>
+                  </td>
                 </tr>
               ))
             ) : (
               <tr>
-                <td colSpan={6} className="px-4 py-8 text-center text-slate-400">
+                <td colSpan={7} className="px-4 py-8 text-center text-slate-400">
                   No documents found.
                 </td>
               </tr>
@@ -127,16 +133,22 @@ function DocsList() {
           </tbody>
         </table>
       </Card>
+
+      <AssignCartDialog
+        docId={assignId}
+        onClose={() => setAssignId(null)}
+        onDone={() => {
+          setAssignId(null);
+          qc.invalidateQueries({ queryKey: ["documents"] });
+        }}
+      />
     </div>
   );
 }
 
-function RegisterDocDialog({ onDone }: { onDone: () => void }) {
-  const { data: user } = useCurrentUser();
-
-  // Draft carts the user can add documents to (RLS narrows to dept).
-  const { data: carts } = useQuery({
-    queryKey: ["draft-carts"],
+function useEditableCarts() {
+  return useQuery({
+    queryKey: ["editable-carts"],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("carts")
@@ -147,41 +159,47 @@ function RegisterDocDialog({ onDone }: { onDone: () => void }) {
       return data;
     },
   });
+}
 
-  const [cartId, setCartId] = useState("");
+function RegisterDocDialog({ onDone }: { onDone: () => void }) {
+  const { data: user } = useCurrentUser();
+  const { data: carts } = useEditableCarts();
+
+  const [cartId, setCartId] = useState<string>("none");
   const [name, setName] = useState("");
   const [num, setNum] = useState("");
   const [retention, setRetention] = useState(365);
   const [fileNum, setFileNum] = useState("");
   const [fileName, setFileName] = useState("");
-  const [regDate, setRegDate] = useState("");
 
   const mut = useMutation({
     mutationFn: async () => {
-      if (!user || !cartId) throw new Error("Select a cart");
-      const cart = carts?.find((c: any) => c.id === cartId);
-      if (!cart) throw new Error("Cart not found");
+      if (!user) throw new Error("Not signed in");
+      const chosen = cartId !== "none" ? carts?.find((c: any) => c.id === cartId) : null;
+      const departmentId = chosen?.department_id ?? user.profile.department_id;
+      if (!departmentId) throw new Error("Your profile has no department assigned. Ask an admin.");
       const { error } = await supabase.from("documents").insert({
-        cart_id: cartId,
+        cart_id: chosen ? chosen.id : null,
         document_name: name,
         document_number: num,
         retention_period: retention,
         file_number: fileNum || null,
         file_name: fileName || null,
-        department_id: cart.department_id,
+        department_id: departmentId,
         created_by: user.userId,
       });
       if (error) throw error;
     },
     onSuccess: () => {
       toast.success("Document registered");
-      setName(""); setNum(""); setFileNum(""); setFileName("");
+      setName(""); setNum(""); setFileNum(""); setFileName(""); setCartId("none");
       onDone();
     },
     onError: (e: any) => {
-      if (String(e.message).includes("duplicate")) toast.error("Document number must be unique");
-      else if (String(e.message).includes("capacity")) toast.error("Cart is at full capacity (60 documents)");
-      else toast.error(e.message);
+      const m = String(e.message);
+      if (m.includes("duplicate")) toast.error("Document number must be unique");
+      else if (m.includes("capacity")) toast.error("Cart is at full capacity (60 documents)");
+      else toast.error(m);
     },
   });
 
@@ -190,36 +208,8 @@ function RegisterDocDialog({ onDone }: { onDone: () => void }) {
       <DialogHeader>
         <DialogTitle>Register a document</DialogTitle>
       </DialogHeader>
-      <form
-        onSubmit={(e) => { e.preventDefault(); mut.mutate(); }}
-        className="space-y-3"
-      >
-        <div>
-          <Label>Cart</Label>
-          <select
-            className="w-full border border-slate-200 rounded-md px-3 py-2 text-sm"
-            value={cartId}
-            onChange={(e) => setCartId(e.target.value)}
-            required
-          >
-            <option value="">Select a draft/retrieved cart…</option>
-            {carts?.map((c: any) => (
-              <option key={c.id} value={c.id}>
-                {c.cart_number} ({c.status})
-              </option>
-            ))}
-          </select>
-          {!carts?.length && (
-            <p className="text-xs text-amber-700 mt-1">
-              No editable carts. <Link to="/carts/new" className="underline">Create a cart</Link> first.
-            </p>
-          )}
-        </div>
+      <form onSubmit={(e) => { e.preventDefault(); mut.mutate(); }} className="space-y-3">
         <div className="grid grid-cols-2 gap-3">
-          <div>
-            <Label>Registration Date</Label>
-            <Input value={regDate} onChange={(e) => setRegDate(e.target.value)} required />
-          </div>
           <div>
             <Label>Document name</Label>
             <Input value={name} onChange={(e) => setName(e.target.value)} required />
@@ -230,7 +220,8 @@ function RegisterDocDialog({ onDone }: { onDone: () => void }) {
           </div>
           <div>
             <Label>Retention period (days)</Label>
-            <Input type="number" min={1} value={retention} onChange={(e) => setRetention(parseInt(e.target.value) || 0)} required />
+            <Input type="number" min={1} value={retention}
+              onChange={(e) => setRetention(parseInt(e.target.value) || 0)} required />
           </div>
           <div>
             <Label>File number (optional)</Label>
@@ -240,6 +231,20 @@ function RegisterDocDialog({ onDone }: { onDone: () => void }) {
             <Label>File name (optional)</Label>
             <Input value={fileName} onChange={(e) => setFileName(e.target.value)} />
           </div>
+          <div className="col-span-2">
+            <Label>Cart (optional — can be assigned later)</Label>
+            <Select value={cartId} onValueChange={setCartId}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none">No cart (assign later)</SelectItem>
+                {carts?.map((c: any) => (
+                  <SelectItem key={c.id} value={c.id}>
+                    {c.cart_number} ({c.status})
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
         </div>
         <DialogFooter>
           <Button type="submit" disabled={mut.isPending}>
@@ -248,5 +253,62 @@ function RegisterDocDialog({ onDone }: { onDone: () => void }) {
         </DialogFooter>
       </form>
     </DialogContent>
+  );
+}
+
+function AssignCartDialog({
+  docId, onClose, onDone,
+}: { docId: string | null; onClose: () => void; onDone: () => void }) {
+  const { data: carts } = useEditableCarts();
+  const [cartId, setCartId] = useState<string>("none");
+
+  const mut = useMutation({
+    mutationFn: async () => {
+      if (!docId) return;
+      const chosen = cartId !== "none" ? carts?.find((c: any) => c.id === cartId) : null;
+      const updates: any = { cart_id: chosen ? chosen.id : null };
+      if (chosen) updates.department_id = chosen.department_id;
+      const { error } = await supabase.from("documents").update(updates).eq("id", docId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Cart updated");
+      onDone();
+    },
+    onError: (e: any) => {
+      const m = String(e.message);
+      if (m.includes("capacity")) toast.error("Cart is at full capacity (60 documents)");
+      else toast.error(m);
+    },
+  });
+
+  return (
+    <Dialog open={!!docId} onOpenChange={(o) => !o && onClose()}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Update cart assignment</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-2">
+          <Label>Cart</Label>
+          <Select value={cartId} onValueChange={setCartId}>
+            <SelectTrigger><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="none">Unassigned</SelectItem>
+              {carts?.map((c: any) => (
+                <SelectItem key={c.id} value={c.id}>
+                  {c.cart_number} ({c.status})
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={onClose}>Cancel</Button>
+          <Button onClick={() => mut.mutate()} disabled={mut.isPending}>
+            {mut.isPending ? "Saving…" : "Update"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }
