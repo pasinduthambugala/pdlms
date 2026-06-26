@@ -24,8 +24,8 @@ function DocsList() {
   const { data: user } = useCurrentUser();
   const qc = useQueryClient();
   const [search, setSearch] = useState("");
-  const [open, setOpen] = useState(false);
-  const [selectedDoc, setSelectedDoc] = useState<any>(null);
+  const [registerOpen, setRegisterOpen] = useState(false);
+  const [detailDoc, setDetailDoc] = useState<any>(null);
 
 
   const { data } = useQuery({
