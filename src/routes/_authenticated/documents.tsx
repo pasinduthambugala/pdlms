@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -13,7 +13,7 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import { useCurrentUser } from "@/hooks/use-current-user";
-import { Plus, Search, Pencil } from "lucide-react";
+import { Plus, Search, Pencil, Eye } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/documents")({
@@ -25,7 +25,8 @@ function DocsList() {
   const qc = useQueryClient();
   const [search, setSearch] = useState("");
   const [open, setOpen] = useState(false);
-  const [assignId, setAssignId] = useState<string | null>(null);
+  const [selectedDoc, setSelectedDoc] = useState<any>(null);
+
 
   const { data } = useQuery({
     queryKey: ["documents"],
@@ -117,8 +118,8 @@ function DocsList() {
                   <td className="px-4 py-3 text-slate-500">{d.file_number ?? "—"}</td>
                   <td className="px-4 py-3 text-slate-500">{d.file_name ?? "—"}</td>
                   <td className="px-4 py-3 text-right">
-                    <Button size="sm" variant="ghost" onClick={() => setAssignId(d.id)}>
-                      <Pencil className="w-4 h-4 mr-1" /> Update cart
+                    <Button size="sm" variant="outline" onClick={() => { setSelectedDoc(d); setOpen(true); }}>
+                      <Eye className="w-4 h-4 mr-1" /> View
                     </Button>
                   </td>
                 </tr>
@@ -134,11 +135,17 @@ function DocsList() {
         </table>
       </Card>
 
-      <AssignCartDialog
-        docId={assignId}
-        onClose={() => setAssignId(null)}
+      {/* Document Detail Dialog */}
+      <DocumentDetailDialog
+        document={selectedDoc}
+        open={open}
+        onOpenChange={(v) => {
+          setOpen(v);
+          if (!v) setSelectedDoc(null);
+        }}
         onDone={() => {
-          setAssignId(null);
+          setOpen(false);
+          setSelectedDoc(null);
           qc.invalidateQueries({ queryKey: ["documents"] });
         }}
       />
@@ -312,3 +319,89 @@ function AssignCartDialog({
     </Dialog>
   );
 }
+
+// Document Detail Dialog – shows readonly fields and allows cart reassignment
+function DocumentDetailDialog({
+  document,
+  open,
+  onOpenChange,
+  onDone,
+}: {
+  document: any | null;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onDone: () => void;
+}) {
+  const { data: carts } = useEditableCarts();
+  const [cartId, setCartId] = useState<string>("none");
+
+  // Initialize cart selection when document changes
+  useEffect(() => {
+    if (document?.carts?.id) {
+      setCartId(document.carts.id);
+    } else {
+      setCartId("none");
+    }
+  }, [document]);
+
+  const mut = useMutation({
+    mutationFn: async () => {
+      if (!document) return;
+      const chosen = cartId !== "none" ? carts?.find((c: any) => c.id === cartId) : null;
+      const updates: any = { cart_id: chosen ? chosen.id : null };
+      if (chosen) updates.department_id = chosen.department_id;
+      const { error } = await supabase.from("documents").update(updates).eq("id", document.id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Cart updated");
+      onDone();
+    },
+    onError: (e: any) => {
+      const m = String(e.message);
+      if (m.includes("capacity")) toast.error("Cart is at full capacity (60 documents)");
+      else toast.error(m);
+    },
+  });
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Document details</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-2">
+          <p><strong>Name:</strong> {document?.document_name ?? "—"}</p>
+          <p><strong>Number:</strong> {document?.document_number ?? "—"}</p>
+          <p><strong>Retention:</strong> {document?.retention_period ?? "—"} days</p>
+          <p><strong>File #:</strong> {document?.file_number ?? "—"}</p>
+          <p><strong>File name:</strong> {document?.file_name ?? "—"}</p>
+          <p><strong>Cart:</strong> {document?.carts?.cart_number ?? "Unassigned"}</p>
+        </div>
+        <div className="mt-4">
+          <Label>Change Cart</Label>
+          <Select value={cartId} onValueChange={setCartId}>
+            <SelectTrigger><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="none">Unassigned</SelectItem>
+              {carts?.map((c: any) => (
+                <SelectItem key={c.id} value={c.id}>
+                  {c.cart_number} ({c.status})
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>
+            Cancel
+          </Button>
+          <Button onClick={() => mut.mutate()} disabled={mut.isPending}>
+            {mut.isPending ? "Saving…" : "Update"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
