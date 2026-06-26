@@ -100,10 +100,9 @@ function CartDetail() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 space-y-6">
           <Card className="p-6">
-            <h2 className="font-semibold text-slate-900 mb-4">Documents ({docsQ.data?.length ?? 0}/60)</h2>
-            {canEditDocs && !isAtCapacity && <NewDocForm cartId={cartId} departmentId={cart.department_id} userId={user.userId} onAdded={() => qc.invalidateQueries({ queryKey: ["cart-docs", cartId] })} />}
-            {isAtCapacity && <p className="text-xs text-amber-700 mb-3">Cart is at full capacity (60 documents).</p>}
-            <div className="border-t border-slate-100 mt-4 pt-2">
+            <h2 className="font-semibold text-slate-900 mb-1">Documents ({docsQ.data?.length ?? 0}/60)</h2>
+            <p className="text-xs text-slate-500 mb-3">Documents are registered from the Documents page and assigned to this cart there.</p>
+            <div className="border-t border-slate-100 mt-2 pt-2">
               {docsQ.data?.length ? (
                 <table className="w-full text-sm">
                   <thead><tr className="text-xs text-slate-500"><th className="text-left py-2">Doc #</th><th className="text-left">Name</th><th className="text-left">File</th><th></th></tr></thead>
@@ -116,9 +115,10 @@ function CartDetail() {
                         <td className="text-right">
                           {canEditDocs && (
                             <button
+                              title="Unassign from this cart"
                               className="text-rose-600 hover:text-rose-800"
                               onClick={async () => {
-                                await supabase.from("documents").delete().eq("id", d.id);
+                                await supabase.from("documents").update({ cart_id: null }).eq("id", d.id);
                                 qc.invalidateQueries({ queryKey: ["cart-docs", cartId] });
                               }}><Trash2 className="w-4 h-4 inline" /></button>
                           )}
