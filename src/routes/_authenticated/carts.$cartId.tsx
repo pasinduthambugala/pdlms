@@ -222,39 +222,3 @@ function RetrievalRequest({ cartId, actorId, comment, onDone }: { cartId: string
   );
 }
 
-function NewDocForm({ cartId, departmentId, userId, onAdded }: { cartId: string; departmentId: string; userId: string; onAdded: () => void }) {
-  const [name, setName] = useState("");
-  const [num, setNum] = useState("");
-  const [retention, setRetention] = useState(365);
-  const [fileNum, setFileNum] = useState("");
-  const [fileName, setFileName] = useState("");
-
-  const submit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    const { error } = await supabase.from("documents").insert({
-      cart_id: cartId,
-      document_name: name,
-      document_number: num,
-      retention_period: retention,
-      file_number: fileNum || null,
-      file_name: fileName || null,
-      department_id: departmentId,
-      created_by: userId,
-    });
-    if (error) return toast.error(error.message);
-    setName(""); setNum(""); setFileNum(""); setFileName("");
-    toast.success("Document added");
-    onAdded();
-  };
-
-  return (
-    <form onSubmit={submit} className="grid grid-cols-2 gap-2 mb-3">
-      <Input placeholder="Document name" value={name} onChange={(e) => setName(e.target.value)} required />
-      <Input placeholder="Document number (unique)" value={num} onChange={(e) => setNum(e.target.value)} required />
-      <Input type="number" min={1} placeholder="Retention days" value={retention} onChange={(e) => setRetention(parseInt(e.target.value))} required />
-      <Input placeholder="File number (optional)" value={fileNum} onChange={(e) => setFileNum(e.target.value)} />
-      <Input placeholder="File name (optional)" value={fileName} onChange={(e) => setFileName(e.target.value)} className="col-span-2" />
-      <Button type="submit" className="col-span-2">Add document</Button>
-    </form>
-  );
-}
