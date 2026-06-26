@@ -212,7 +212,7 @@ export type Database = {
       }
       documents: {
         Row: {
-          cart_id: string
+          cart_id: string | null
           created_at: string
           created_by: string
           department_id: string
@@ -225,7 +225,7 @@ export type Database = {
           retention_period: number
         }
         Insert: {
-          cart_id: string
+          cart_id?: string | null
           created_at?: string
           created_by: string
           department_id: string
@@ -238,7 +238,7 @@ export type Database = {
           retention_period: number
         }
         Update: {
-          cart_id?: string
+          cart_id?: string | null
           created_at?: string
           created_by?: string
           department_id?: string
