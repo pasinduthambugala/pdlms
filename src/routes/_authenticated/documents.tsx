@@ -58,7 +58,7 @@ function DocsList() {
           <h1 className="text-2xl font-bold text-slate-900">Documents</h1>
           <p className="text-sm text-slate-500">All documents you have access to.</p>
         </div>
-        <Dialog open={open} onOpenChange={setOpen}>
+        <Dialog open={registerOpen} onOpenChange={setRegisterOpen}>
           <DialogTrigger asChild>
             <Button disabled={!user?.profile.is_active}>
               <Plus className="w-4 h-4 mr-2" /> Register document
@@ -66,7 +66,7 @@ function DocsList() {
           </DialogTrigger>
           <RegisterDocDialog
             onDone={() => {
-              setOpen(false);
+              setRegisterOpen(false);
               qc.invalidateQueries({ queryKey: ["documents"] });
             }}
           />
