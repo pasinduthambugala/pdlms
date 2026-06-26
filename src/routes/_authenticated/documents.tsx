@@ -137,15 +137,11 @@ function DocsList() {
 
       {/* Document Detail Dialog */}
       <DocumentDetailDialog
-        document={selectedDoc}
-        open={open}
-        onOpenChange={(v) => {
-          setOpen(v);
-          if (!v) setSelectedDoc(null);
-        }}
+        document={detailDoc}
+        open={!!detailDoc}
+        onOpenChange={(v) => { if (!v) setDetailDoc(null); }}
         onDone={() => {
-          setOpen(false);
-          setSelectedDoc(null);
+          setDetailDoc(null);
           qc.invalidateQueries({ queryKey: ["documents"] });
         }}
       />
