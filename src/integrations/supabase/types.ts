@@ -221,6 +221,7 @@ export type Database = {
           file_name: string | null
           file_number: string | null
           id: string
+          registration_date: string | null
           retention_period: number
         }
         Insert: {
@@ -233,6 +234,7 @@ export type Database = {
           file_name?: string | null
           file_number?: string | null
           id?: string
+          registration_date?: string | null
           retention_period: number
         }
         Update: {
@@ -245,6 +247,7 @@ export type Database = {
           file_name?: string | null
           file_number?: string | null
           id?: string
+          registration_date?: string | null
           retention_period?: number
         }
         Relationships: [
