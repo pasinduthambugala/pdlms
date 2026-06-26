@@ -118,7 +118,7 @@ function DocsList() {
                   <td className="px-4 py-3 text-slate-500">{d.file_number ?? "—"}</td>
                   <td className="px-4 py-3 text-slate-500">{d.file_name ?? "—"}</td>
                   <td className="px-4 py-3 text-right">
-                    <Button size="sm" variant="outline" onClick={() => { setSelectedDoc(d); setOpen(true); }}>
+                    <Button size="sm" variant="outline" onClick={() => setDetailDoc(d)}>
                       <Eye className="w-4 h-4 mr-1" /> View
                     </Button>
                   </td>
