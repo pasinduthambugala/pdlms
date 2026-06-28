@@ -256,6 +256,23 @@ function RegisterDocDialog({ onDone }: { onDone: () => void }) {
             <Input value={fileName} onChange={(e) => setFileName(e.target.value)} />
           </div>
           <div className="col-span-2">
+            <Label>Registered date</Label>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button type="button" variant="outline"
+                  className={cn("w-full justify-start text-left font-normal", !regDate && "text-muted-foreground")}>
+                  <CalendarIcon className="w-4 h-4 mr-2" />
+                  {regDate ? format(regDate, "PPP") : "Pick a date"}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0 pointer-events-auto" align="start">
+                <Calendar mode="single" selected={regDate}
+                  onSelect={(d) => d && setRegDate(d)} initialFocus
+                  className="p-3 pointer-events-auto" />
+              </PopoverContent>
+            </Popover>
+          </div>
+          <div className="col-span-2">
             <Label>Cart (optional — can be assigned later)</Label>
             <Select value={cartId} onValueChange={setCartId}>
               <SelectTrigger><SelectValue /></SelectTrigger>
