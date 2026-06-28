@@ -235,6 +235,11 @@ function NewPOForm({ onCreated, userId }: { onCreated: () => void; userId: strin
         <div><Label>Period end</Label><Input type="date" value={periodEnd} onChange={(e) => setPeriodEnd(e.target.value)} /></div>
       </div>
       <div><Label>Description</Label><Textarea rows={2} value={description} onChange={(e) => setDescription(e.target.value)} /></div>
+      <div>
+        <Label>Attachment (optional)</Label>
+        <Input type="file" onChange={(e) => setFile(e.target.files?.[0] ?? null)} />
+        {file && <p className="text-xs text-slate-500 mt-1">{file.name}</p>}
+      </div>
       <Button type="submit" className="w-full">Create PO + allocate</Button>
     </form>
   );
