@@ -107,6 +107,7 @@ function DocsList() {
               <th className="text-left px-4 py-3">Cart Number</th>
               <th className="text-left px-4 py-3">File Number</th>
               <th className="text-left px-4 py-3">File Name</th>
+              <th className="text-left px-4 py-3">Registered Date</th>
               <th className="text-right px-4 py-3">Actions</th>
             </tr>
           </thead>
@@ -129,6 +130,11 @@ function DocsList() {
                   </td>
                   <td className="px-4 py-3 text-slate-500">{d.file_number ?? "—"}</td>
                   <td className="px-4 py-3 text-slate-500">{d.file_name ?? "—"}</td>
+                  <td className="px-4 py-3 text-slate-600">
+                    {d.registration_date
+                      ? format(new Date(d.registration_date), "PP")
+                      : format(new Date(d.created_at), "PP")}
+                  </td>
                   <td className="px-4 py-3 text-right">
                     <Button size="sm" variant="outline" onClick={() => setDetailDoc(d)}>
                       <Eye className="w-4 h-4 mr-1" /> View
@@ -138,7 +144,7 @@ function DocsList() {
               ))
             ) : (
               <tr>
-                <td colSpan={7} className="px-4 py-8 text-center text-slate-400">
+                <td colSpan={8} className="px-4 py-8 text-center text-slate-400">
                   No documents found.
                 </td>
               </tr>
