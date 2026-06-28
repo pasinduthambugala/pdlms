@@ -447,6 +447,7 @@ export type Database = {
         | "mark_stored"
         | "mark_retrieved"
         | "dispose"
+        | "create"
       cart_status:
         | "draft"
         | "pending_approval"
@@ -602,6 +603,7 @@ export const Constants = {
         "mark_stored",
         "mark_retrieved",
         "dispose",
+        "create",
       ],
       cart_status: [
         "draft",
