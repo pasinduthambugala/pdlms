@@ -72,6 +72,7 @@ function Costs() {
                   <th className="text-left px-4 py-2">Amount</th>
                   <th className="text-left px-4 py-2">Department</th>
                   <th className="text-left px-4 py-2">Period</th>
+                  <th className="text-left px-4 py-2">Attachment</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
@@ -82,8 +83,21 @@ function Costs() {
                     <td className="px-4 py-2">${Number(p.amount).toFixed(2)}</td>
                     <td className="px-4 py-2">{p.departments?.name ?? "—"}</td>
                     <td className="px-4 py-2 text-slate-500">{p.period_start ?? "—"} → {p.period_end ?? "—"}</td>
+                    <td className="px-4 py-2">
+                      {p.attachment_url ? (
+                        <button className="text-blue-600 hover:underline text-xs"
+                          onClick={async () => {
+                            const { data } = await supabase.storage
+                              .from("po-attachments")
+                              .createSignedUrl(p.attachment_url, 60);
+                            if (data?.signedUrl) window.open(data.signedUrl, "_blank");
+                          }}>
+                          {p.attachment_name ?? "Download"}
+                        </button>
+                      ) : "—"}
+                    </td>
                   </tr>
-                )) : <tr><td colSpan={5} className="px-4 py-6 text-center text-slate-400">No purchase orders.</td></tr>}
+                )) : <tr><td colSpan={6} className="px-4 py-6 text-center text-slate-400">No purchase orders.</td></tr>}
               </tbody>
             </table>
           </Card>
