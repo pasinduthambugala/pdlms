@@ -31,6 +31,12 @@ function DocsList() {
   const [registerOpen, setRegisterOpen] = useState(false);
   const [detailDoc, setDetailDoc] = useState<any>(null);
 
+  const canRegister =
+    !!user && (user.roles.includes("super_admin") ||
+      user.roles.includes("employee") ||
+      user.roles.includes("office_services")) &&
+    !user.roles.includes("dept_head");
+
 
   const { data } = useQuery({
     queryKey: ["documents"],
