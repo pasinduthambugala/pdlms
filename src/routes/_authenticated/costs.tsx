@@ -202,7 +202,7 @@ function NewPOForm({ onCreated, userId }: { onCreated: () => void; userId: strin
       }
 
       toast.success("Purchase order created and allocated");
-      setPoNumber(""); setAmount(0); setDeptId(""); setDescription("");
+      setPoNumber(""); setAmount(0); setDeptId(""); setDescription(""); setFile(null);
       onCreated();
     } catch (err: any) {
       toast.error(err.message);
