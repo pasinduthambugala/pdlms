@@ -349,6 +349,8 @@ export type Database = {
       purchase_orders: {
         Row: {
           amount: number
+          attachment_name: string | null
+          attachment_url: string | null
           created_at: string
           created_by: string
           department_id: string | null
@@ -361,6 +363,8 @@ export type Database = {
         }
         Insert: {
           amount: number
+          attachment_name?: string | null
+          attachment_url?: string | null
           created_at?: string
           created_by: string
           department_id?: string | null
@@ -373,6 +377,8 @@ export type Database = {
         }
         Update: {
           amount?: number
+          attachment_name?: string | null
+          attachment_url?: string | null
           created_at?: string
           created_by?: string
           department_id?: string | null
@@ -451,6 +457,8 @@ export type Database = {
         | "pending_return_approval"
         | "disposed"
         | "rejected"
+        | "retrieval_approved"
+        | "return_approved"
       po_type: "storage" | "transport" | "urgent_retrieval"
       retrieval_type: "normal" | "urgent"
     }
@@ -605,6 +613,8 @@ export const Constants = {
         "pending_return_approval",
         "disposed",
         "rejected",
+        "retrieval_approved",
+        "return_approved",
       ],
       po_type: ["storage", "transport", "urgent_retrieval"],
       retrieval_type: ["normal", "urgent"],
