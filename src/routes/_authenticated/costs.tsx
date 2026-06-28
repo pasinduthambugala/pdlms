@@ -72,6 +72,7 @@ function Costs() {
                   <th className="text-left px-4 py-2">Amount</th>
                   <th className="text-left px-4 py-2">Department</th>
                   <th className="text-left px-4 py-2">Period</th>
+                  <th className="text-left px-4 py-2">Attachment</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
@@ -82,8 +83,21 @@ function Costs() {
                     <td className="px-4 py-2">${Number(p.amount).toFixed(2)}</td>
                     <td className="px-4 py-2">{p.departments?.name ?? "—"}</td>
                     <td className="px-4 py-2 text-slate-500">{p.period_start ?? "—"} → {p.period_end ?? "—"}</td>
+                    <td className="px-4 py-2">
+                      {p.attachment_url ? (
+                        <button className="text-blue-600 hover:underline text-xs"
+                          onClick={async () => {
+                            const { data } = await supabase.storage
+                              .from("po-attachments")
+                              .createSignedUrl(p.attachment_url, 60);
+                            if (data?.signedUrl) window.open(data.signedUrl, "_blank");
+                          }}>
+                          {p.attachment_name ?? "Download"}
+                        </button>
+                      ) : "—"}
+                    </td>
                   </tr>
-                )) : <tr><td colSpan={5} className="px-4 py-6 text-center text-slate-400">No purchase orders.</td></tr>}
+                )) : <tr><td colSpan={6} className="px-4 py-6 text-center text-slate-400">No purchase orders.</td></tr>}
               </tbody>
             </table>
           </Card>
@@ -127,6 +141,7 @@ function NewPOForm({ onCreated, userId }: { onCreated: () => void; userId: strin
   const [periodStart, setPeriodStart] = useState("");
   const [periodEnd, setPeriodEnd] = useState("");
   const [description, setDescription] = useState("");
+  const [file, setFile] = useState<File | null>(null);
 
   const { data: departments } = useQuery({
     queryKey: ["departments"],
@@ -136,12 +151,23 @@ function NewPOForm({ onCreated, userId }: { onCreated: () => void; userId: strin
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
+      let attachment_url: string | null = null;
+      let attachment_name: string | null = null;
+      if (file) {
+        const path = `${userId}/${Date.now()}-${file.name}`;
+        const { error: upErr } = await supabase.storage
+          .from("po-attachments").upload(path, file, { upsert: false });
+        if (upErr) throw upErr;
+        attachment_url = path;
+        attachment_name = file.name;
+      }
       // Insert PO
       const { data: po, error } = await supabase.from("purchase_orders").insert({
         po_number: poNumber, po_type: type, amount,
         department_id: type === "transport" ? null : (deptId || null),
         period_start: periodStart || null, period_end: periodEnd || null,
         description: description || null, created_by: userId,
+        attachment_url, attachment_name,
       }).select().single();
       if (error) throw error;
 
@@ -176,7 +202,7 @@ function NewPOForm({ onCreated, userId }: { onCreated: () => void; userId: strin
       }
 
       toast.success("Purchase order created and allocated");
-      setPoNumber(""); setAmount(0); setDeptId(""); setDescription("");
+      setPoNumber(""); setAmount(0); setDeptId(""); setDescription(""); setFile(null);
       onCreated();
     } catch (err: any) {
       toast.error(err.message);
@@ -209,6 +235,11 @@ function NewPOForm({ onCreated, userId }: { onCreated: () => void; userId: strin
         <div><Label>Period end</Label><Input type="date" value={periodEnd} onChange={(e) => setPeriodEnd(e.target.value)} /></div>
       </div>
       <div><Label>Description</Label><Textarea rows={2} value={description} onChange={(e) => setDescription(e.target.value)} /></div>
+      <div>
+        <Label>Attachment (optional)</Label>
+        <Input type="file" onChange={(e) => setFile(e.target.files?.[0] ?? null)} />
+        {file && <p className="text-xs text-slate-500 mt-1">{file.name}</p>}
+      </div>
       <Button type="submit" className="w-full">Create PO + allocate</Button>
     </form>
   );

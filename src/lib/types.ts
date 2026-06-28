@@ -6,8 +6,10 @@ export type CartStatus =
   | "approved"
   | "stored"
   | "pending_retrieval_approval"
+  | "retrieval_approved"
   | "retrieved"
   | "pending_return_approval"
+  | "return_approved"
   | "disposed"
   | "rejected";
 
@@ -55,6 +57,7 @@ export interface DocumentRow {
   department_id: string;
   created_by: string;
   created_at: string;
+  registration_date: string | null;
 }
 
 export const ROLE_LABELS: Record<AppRole, string> = {
@@ -70,8 +73,10 @@ export const STATUS_LABELS: Record<CartStatus, string> = {
   approved: "Approved",
   stored: "Stored",
   pending_retrieval_approval: "Pending Retrieval Approval",
+  retrieval_approved: "Retrieval Approved",
   retrieved: "Retrieved",
   pending_return_approval: "Pending Return Approval",
+  return_approved: "Return Approved",
   disposed: "Disposed",
   rejected: "Rejected",
 };

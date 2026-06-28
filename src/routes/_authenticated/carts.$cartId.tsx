@@ -4,7 +4,6 @@ import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { StatusBadge } from "@/components/StatusBadge";
@@ -51,25 +50,32 @@ function CartDetail() {
       const { data, error } = await supabase
         .from("cart_approvals").select("*").eq("cart_id", cartId).order("created_at", { ascending: false });
       if (error) throw error;
-      return data;
+      const ids = Array.from(new Set((data ?? []).map((r: any) => r.actor_id).filter(Boolean)));
+      let actors: Record<string, { full_name: string | null; email: string }> = {};
+      if (ids.length) {
+        const { data: profs } = await supabase
+          .from("profiles").select("id, full_name, email").in("id", ids as string[]);
+        actors = Object.fromEntries((profs ?? []).map((p: any) => [p.id, p]));
+      }
+      return (data ?? []).map((r: any) => ({ ...r, actor: actors[r.actor_id] }));
     },
   });
 
   const transition = useMutation({
-    mutationFn: async ({ status, action, extra }: { status: CartStatus; action: any; extra?: any }) => {
+    mutationFn: async ({ status, action, extra }: { status: CartStatus; action: string; extra?: any }) => {
       if (!user) throw new Error("not signed in");
       const updates: any = { status, ...(extra ?? {}) };
       const { error: uErr } = await supabase.from("carts").update(updates).eq("id", cartId);
       if (uErr) throw uErr;
       await supabase.from("cart_approvals").insert({
-        cart_id: cartId, action, actor_id: user.userId, comments: comment || null,
+        cart_id: cartId, action: action as any, actor_id: user.userId, comments: comment || null,
       });
       setComment("");
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["cart", cartId] });
       qc.invalidateQueries({ queryKey: ["cart-history", cartId] });
-      qc.invalidateQueries({ queryKey: ["carts"] });
+      qc.invalidateQueries({ queryKey: ["carts-with-counts"] });
       toast.success("Updated");
     },
     onError: (e: any) => toast.error(e.message),
@@ -80,9 +86,9 @@ function CartDetail() {
 
   const isDeptHead = user.roles.includes("dept_head") && cart.department_id === user.profile.department_id;
   const isAdmin = user.roles.includes("super_admin");
+  const isOffice = user.roles.includes("office_services");
   const isOwnerDept = cart.department_id === user.profile.department_id;
-  const canEditDocs = isOwnerDept && EDITABLE_STATUSES.includes(cart.status);
-  const _isAtCapacity = (docsQ.data?.length ?? 0) >= 60;
+  const canEditDocs = (isOwnerDept || isAdmin) && EDITABLE_STATUSES.includes(cart.status as CartStatus);
 
   return (
     <div>
@@ -90,7 +96,7 @@ function CartDetail() {
         <div>
           <h1 className="text-2xl font-bold text-slate-900">Cart {cart.cart_number}</h1>
           <div className="mt-2 flex items-center gap-3">
-            <StatusBadge status={cart.status} />
+            <StatusBadge status={cart.status as CartStatus} />
             <span className="text-sm text-slate-500">{cart.departments?.name}</span>
             <span className="text-sm text-slate-500">Disposal: {cart.disposal_date}</span>
           </div>
@@ -136,8 +142,13 @@ function CartDetail() {
             <ul className="space-y-2 text-sm">
               {historyQ.data?.map((h: any) => (
                 <li key={h.id} className="border-l-2 border-slate-200 pl-3">
-                  <div className="font-medium text-slate-800">{h.action}</div>
-                  <div className="text-xs text-slate-500">{new Date(h.created_at).toLocaleString()}</div>
+                  <div className="font-medium text-slate-800">{formatAction(h.action)}</div>
+                  <div className="text-xs text-slate-500">
+                    {new Date(h.created_at).toLocaleString()} · by{" "}
+                    <span className="font-medium text-slate-700">
+                      {h.actor?.full_name ?? h.actor?.email ?? "Unknown user"}
+                    </span>
+                  </div>
                   {h.comments && <div className="text-slate-600 mt-1">"{h.comments}"</div>}
                 </li>
               ))}
@@ -154,7 +165,7 @@ function CartDetail() {
               <Textarea id="cm" value={comment} onChange={(e) => setComment(e.target.value)} className="mb-3" rows={2} />
             </div>
             <div className="space-y-2">
-              {cart.status === "draft" && isOwnerDept && (
+              {cart.status === "draft" && (isOwnerDept || isAdmin) && (
                 <Button className="w-full" onClick={() => transition.mutate({ status: "pending_approval", action: "submit" })}>
                   Submit for approval
                 </Button>
@@ -165,30 +176,40 @@ function CartDetail() {
                   <Button variant="destructive" className="w-full" onClick={() => transition.mutate({ status: "draft", action: "reject", extra: { rejection_reason: comment } })}>Reject (back to draft)</Button>
                 </>
               )}
-              {cart.status === "approved" && isOwnerDept && (
+              {cart.status === "approved" && (isOwnerDept || isAdmin || isOffice) && (
                 <Button className="w-full" onClick={() => transition.mutate({ status: "stored", action: "mark_stored", extra: { stored_at: new Date().toISOString() } })}>
                   Mark as Stored
                 </Button>
               )}
-              {cart.status === "stored" && isOwnerDept && (
+              {cart.status === "stored" && (isOwnerDept || isAdmin) && (
                 <RetrievalRequest cartId={cartId} actorId={user.userId} comment={comment} onDone={() => { setComment(""); qc.invalidateQueries({ queryKey: ["cart", cartId] }); qc.invalidateQueries({ queryKey: ["cart-history", cartId] }); }} />
               )}
               {cart.status === "pending_retrieval_approval" && (isDeptHead || isAdmin) && (
                 <>
-                  <Button className="w-full" onClick={() => transition.mutate({ status: "retrieved", action: "retrieval_approved", extra: { retrieved_at: new Date().toISOString() } })}>Approve retrieval</Button>
+                  <Button className="w-full" onClick={() => transition.mutate({ status: "retrieval_approved", action: "retrieval_approved" })}>Approve retrieval</Button>
                   <Button variant="destructive" className="w-full" onClick={() => transition.mutate({ status: "stored", action: "retrieval_rejected" })}>Reject</Button>
                 </>
               )}
-              {cart.status === "retrieved" && isOwnerDept && (
+              {cart.status === "retrieval_approved" && (isOwnerDept || isAdmin || isOffice) && (
+                <Button className="w-full" onClick={() => transition.mutate({ status: "retrieved", action: "mark_retrieved", extra: { retrieved_at: new Date().toISOString() } })}>
+                  Mark as Retrieved
+                </Button>
+              )}
+              {cart.status === "retrieved" && (isOwnerDept || isAdmin) && (
                 <Button className="w-full" onClick={() => transition.mutate({ status: "pending_return_approval", action: "return_request" })}>
                   Submit return for approval
                 </Button>
               )}
               {cart.status === "pending_return_approval" && (isDeptHead || isAdmin) && (
                 <>
-                  <Button className="w-full" onClick={() => transition.mutate({ status: "stored", action: "return_approved", extra: { stored_at: new Date().toISOString() } })}>Approve return</Button>
+                  <Button className="w-full" onClick={() => transition.mutate({ status: "return_approved", action: "return_approved" })}>Approve return</Button>
                   <Button variant="destructive" className="w-full" onClick={() => transition.mutate({ status: "retrieved", action: "return_rejected" })}>Reject</Button>
                 </>
+              )}
+              {cart.status === "return_approved" && (isOwnerDept || isAdmin || isOffice) && (
+                <Button className="w-full" onClick={() => transition.mutate({ status: "stored", action: "mark_stored", extra: { stored_at: new Date().toISOString() } })}>
+                  Mark as Stored
+                </Button>
               )}
               {(cart.status === "stored" || cart.status === "approved") && isAdmin && (
                 <Button variant="outline" className="w-full" onClick={() => transition.mutate({ status: "disposed", action: "dispose" })}>
@@ -201,6 +222,25 @@ function CartDetail() {
       </div>
     </div>
   );
+}
+
+function formatAction(a: string) {
+  const map: Record<string, string> = {
+    create: "Cart created",
+    submit: "Submitted for approval",
+    approve: "Approved",
+    reject: "Rejected",
+    mark_stored: "Marked as Stored",
+    mark_retrieved: "Marked as Retrieved",
+    retrieval_request: "Retrieval requested",
+    retrieval_approved: "Retrieval approved",
+    retrieval_rejected: "Retrieval rejected",
+    return_request: "Return requested",
+    return_approved: "Return approved",
+    return_rejected: "Return rejected",
+    dispose: "Disposed",
+  };
+  return map[a] ?? a;
 }
 
 function RetrievalRequest({ cartId, actorId, comment, onDone }: { cartId: string; actorId: string; comment: string; onDone: () => void }) {
@@ -221,4 +261,3 @@ function RetrievalRequest({ cartId, actorId, comment, onDone }: { cartId: string
     </div>
   );
 }
-
