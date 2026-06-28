@@ -192,6 +192,7 @@ function RegisterDocDialog({ onDone }: { onDone: () => void }) {
   const [retention, setRetention] = useState(365);
   const [fileNum, setFileNum] = useState("");
   const [fileName, setFileName] = useState("");
+  const [regDate, setRegDate] = useState<Date>(new Date());
 
   const mut = useMutation({
     mutationFn: async () => {
@@ -208,12 +209,14 @@ function RegisterDocDialog({ onDone }: { onDone: () => void }) {
         file_name: fileName || null,
         department_id: departmentId,
         created_by: user.userId,
+        registration_date: regDate.toISOString(),
       });
       if (error) throw error;
     },
     onSuccess: () => {
       toast.success("Document registered");
       setName(""); setNum(""); setFileNum(""); setFileName(""); setCartId("none");
+      setRegDate(new Date());
       onDone();
     },
     onError: (e: any) => {
