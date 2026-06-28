@@ -7,15 +7,19 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { StatusBadge } from "@/components/StatusBadge";
 import { useCurrentUser } from "@/hooks/use-current-user";
-import { Plus, Search, Eye } from "lucide-react";
+import { Plus, Search, Eye, CalendarIcon } from "lucide-react";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
 } from "@/components/ui/dialog";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
 import { Progress } from "@/components/ui/progress";
 import { STATUS_LABELS, type CartStatus } from "@/lib/types";
+import { format } from "date-fns";
+import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_authenticated/carts/")({
   component: CartsList,
@@ -23,14 +27,23 @@ export const Route = createFileRoute("/_authenticated/carts/")({
 
 const FILTER_STATUSES: CartStatus[] = [
   "draft", "pending_approval", "approved", "stored",
-  "retrieved", "pending_return_approval",
+  "pending_retrieval_approval", "retrieval_approved",
+  "retrieved", "pending_return_approval", "return_approved", "disposed",
 ];
 
 function CartsList() {
   const { data: user } = useCurrentUser();
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState<string>("all");
+  const [from, setFrom] = useState<Date | undefined>();
+  const [to, setTo] = useState<Date | undefined>();
   const [viewId, setViewId] = useState<string | null>(null);
+
+  const canCreateCart =
+    !!user && (user.roles.includes("super_admin") ||
+      user.roles.includes("employee") ||
+      user.roles.includes("office_services")) &&
+    !user.roles.includes("dept_head");
 
   const { data: carts } = useQuery({
     queryKey: ["carts-with-counts"],
@@ -50,9 +63,12 @@ function CartsList() {
     return carts.filter((c: any) => {
       if (status !== "all" && c.status !== status) return false;
       if (q && !c.cart_number.toLowerCase().includes(q)) return false;
+      const updated = new Date(c.updated_at ?? c.created_at);
+      if (from && updated < from) return false;
+      if (to && updated > new Date(to.getTime() + 86400000)) return false;
       return true;
     });
-  }, [carts, search, status]);
+  }, [carts, search, status, from, to]);
 
   return (
     <div>
@@ -61,14 +77,16 @@ function CartsList() {
           <h1 className="text-2xl font-bold text-slate-900">Cart Management</h1>
           <p className="text-sm text-slate-500">Document carts and their lifecycle status.</p>
         </div>
-        <Link to="/carts/new">
-          <Button disabled={!user?.profile.is_active}>
-            <Plus className="w-4 h-4 mr-2" /> New cart
-          </Button>
-        </Link>
+        {canCreateCart && (
+          <Link to="/carts/new">
+            <Button disabled={!user?.profile.is_active}>
+              <Plus className="w-4 h-4 mr-2" /> New cart
+            </Button>
+          </Link>
+        )}
       </header>
 
-      <Card className="p-4 mb-4 flex flex-col sm:flex-row gap-3 sm:items-center sm:justify-between">
+      <Card className="p-4 mb-4 flex flex-col lg:flex-row gap-3 lg:items-center lg:justify-between">
         <div className="relative flex-1 max-w-md">
           <Search className="w-4 h-4 absolute left-3 top-2.5 text-slate-400" />
           <Input
@@ -78,8 +96,14 @@ function CartsList() {
             className="pl-9"
           />
         </div>
-        <div className="flex items-center gap-2">
-          <span className="text-xs text-slate-500">Filter:</span>
+        <div className="flex flex-wrap items-center gap-2">
+          <DateField label="From" value={from} onChange={setFrom} />
+          <DateField label="To" value={to} onChange={setTo} />
+          {(from || to) && (
+            <Button size="sm" variant="ghost" onClick={() => { setFrom(undefined); setTo(undefined); }}>
+              Clear
+            </Button>
+          )}
           <Select value={status} onValueChange={setStatus}>
             <SelectTrigger className="w-56"><SelectValue /></SelectTrigger>
             <SelectContent>
@@ -97,7 +121,7 @@ function CartsList() {
           <thead className="bg-slate-50 text-slate-600 text-xs uppercase">
             <tr>
               <th className="text-left px-4 py-3">Cart Number</th>
-              {/* <th className="text-left px-4 py-3">Department</th> */}
+              <th className="text-left px-4 py-3">Department</th>
               <th className="text-left px-4 py-3">Documents</th>
               <th className="text-left px-4 py-3">Capacity</th>
               <th className="text-left px-4 py-3">Status</th>
@@ -112,7 +136,7 @@ function CartsList() {
               return (
                 <tr key={c.id}>
                   <td className="px-4 py-3 font-medium text-slate-900">{c.cart_number}</td>
-                  {/* <td className="px-4 py-3 text-slate-600">{c.departments?.name ?? "—"}</td> */}
+                  <td className="px-4 py-3 text-slate-600">{c.departments?.name ?? "—"}</td>
                   <td className="px-4 py-3 text-slate-600">{count}/60</td>
                   <td className="px-4 py-3 text-slate-600">{pct}%</td>
                   <td className="px-4 py-3"><StatusBadge status={c.status} /></td>
@@ -135,6 +159,23 @@ function CartsList() {
 
       <CartViewDialog cartId={viewId} onClose={() => setViewId(null)} />
     </div>
+  );
+}
+
+function DateField({ label, value, onChange }: { label: string; value?: Date; onChange: (d?: Date) => void }) {
+  return (
+    <Popover>
+      <PopoverTrigger asChild>
+        <Button variant="outline" size="sm"
+          className={cn("justify-start text-left font-normal", !value && "text-muted-foreground")}>
+          <CalendarIcon className="w-3 h-3 mr-2" />
+          {value ? format(value, "PP") : label}
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-auto p-0 pointer-events-auto" align="start">
+        <Calendar mode="single" selected={value} onSelect={onChange} initialFocus className="p-3 pointer-events-auto" />
+      </PopoverContent>
+    </Popover>
   );
 }
 
@@ -192,8 +233,8 @@ function CartViewDialog({ cartId, onClose }: { cartId: string | null; onClose: (
                 <table className="w-full text-sm">
                   <thead className="bg-slate-50 text-xs uppercase text-slate-500">
                     <tr>
-                      <th className="text-left px-3 py-2">Number</th>
-                      <th className="text-left px-3 py-2">Name</th>
+                      <th className="text-left px-3 py-2">Document Number</th>
+                      <th className="text-left px-3 py-2">Document Name</th>
                       <th className="text-right px-3 py-2">Status</th>
                     </tr>
                   </thead>
