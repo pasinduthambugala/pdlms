@@ -142,6 +142,20 @@ export type Database = {
             foreignKeyName: "carts_department_id_fkey"
             columns: ["department_id"]
             isOneToOne: false
+            referencedRelation: "department_cost_report"
+            referencedColumns: ["department_id"]
+          },
+          {
+            foreignKeyName: "carts_department_id_fkey"
+            columns: ["department_id"]
+            isOneToOne: false
+            referencedRelation: "department_inventory"
+            referencedColumns: ["department_id"]
+          },
+          {
+            foreignKeyName: "carts_department_id_fkey"
+            columns: ["department_id"]
+            isOneToOne: false
             referencedRelation: "departments"
             referencedColumns: ["id"]
           },
@@ -176,6 +190,20 @@ export type Database = {
           purchase_order_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "cost_allocations_department_id_fkey"
+            columns: ["department_id"]
+            isOneToOne: false
+            referencedRelation: "department_cost_report"
+            referencedColumns: ["department_id"]
+          },
+          {
+            foreignKeyName: "cost_allocations_department_id_fkey"
+            columns: ["department_id"]
+            isOneToOne: false
+            referencedRelation: "department_inventory"
+            referencedColumns: ["department_id"]
+          },
           {
             foreignKeyName: "cost_allocations_department_id_fkey"
             columns: ["department_id"]
@@ -262,6 +290,20 @@ export type Database = {
             foreignKeyName: "documents_department_id_fkey"
             columns: ["department_id"]
             isOneToOne: false
+            referencedRelation: "department_cost_report"
+            referencedColumns: ["department_id"]
+          },
+          {
+            foreignKeyName: "documents_department_id_fkey"
+            columns: ["department_id"]
+            isOneToOne: false
+            referencedRelation: "department_inventory"
+            referencedColumns: ["department_id"]
+          },
+          {
+            foreignKeyName: "documents_department_id_fkey"
+            columns: ["department_id"]
+            isOneToOne: false
             referencedRelation: "departments"
             referencedColumns: ["id"]
           },
@@ -299,6 +341,20 @@ export type Database = {
           type?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "notifications_department_id_fkey"
+            columns: ["department_id"]
+            isOneToOne: false
+            referencedRelation: "department_cost_report"
+            referencedColumns: ["department_id"]
+          },
+          {
+            foreignKeyName: "notifications_department_id_fkey"
+            columns: ["department_id"]
+            isOneToOne: false
+            referencedRelation: "department_inventory"
+            referencedColumns: ["department_id"]
+          },
           {
             foreignKeyName: "notifications_department_id_fkey"
             columns: ["department_id"]
@@ -341,6 +397,20 @@ export type Database = {
             foreignKeyName: "profiles_department_id_fkey"
             columns: ["department_id"]
             isOneToOne: false
+            referencedRelation: "department_cost_report"
+            referencedColumns: ["department_id"]
+          },
+          {
+            foreignKeyName: "profiles_department_id_fkey"
+            columns: ["department_id"]
+            isOneToOne: false
+            referencedRelation: "department_inventory"
+            referencedColumns: ["department_id"]
+          },
+          {
+            foreignKeyName: "profiles_department_id_fkey"
+            columns: ["department_id"]
+            isOneToOne: false
             referencedRelation: "departments"
             referencedColumns: ["id"]
           },
@@ -351,6 +421,7 @@ export type Database = {
           amount: number
           attachment_name: string | null
           attachment_url: string | null
+          box_count: number | null
           created_at: string
           created_by: string
           department_id: string | null
@@ -360,11 +431,13 @@ export type Database = {
           period_start: string | null
           po_number: string
           po_type: Database["public"]["Enums"]["po_type"]
+          unit_price: number | null
         }
         Insert: {
           amount: number
           attachment_name?: string | null
           attachment_url?: string | null
+          box_count?: number | null
           created_at?: string
           created_by: string
           department_id?: string | null
@@ -374,11 +447,13 @@ export type Database = {
           period_start?: string | null
           po_number: string
           po_type: Database["public"]["Enums"]["po_type"]
+          unit_price?: number | null
         }
         Update: {
           amount?: number
           attachment_name?: string | null
           attachment_url?: string | null
+          box_count?: number | null
           created_at?: string
           created_by?: string
           department_id?: string | null
@@ -388,8 +463,23 @@ export type Database = {
           period_start?: string | null
           po_number?: string
           po_type?: Database["public"]["Enums"]["po_type"]
+          unit_price?: number | null
         }
         Relationships: [
+          {
+            foreignKeyName: "purchase_orders_department_id_fkey"
+            columns: ["department_id"]
+            isOneToOne: false
+            referencedRelation: "department_cost_report"
+            referencedColumns: ["department_id"]
+          },
+          {
+            foreignKeyName: "purchase_orders_department_id_fkey"
+            columns: ["department_id"]
+            isOneToOne: false
+            referencedRelation: "department_inventory"
+            referencedColumns: ["department_id"]
+          },
           {
             foreignKeyName: "purchase_orders_department_id_fkey"
             columns: ["department_id"]
@@ -419,7 +509,26 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      department_cost_report: {
+        Row: {
+          department_id: string | null
+          department_name: string | null
+          grand_total: number | null
+          storage_cost: number | null
+          transport_cost: number | null
+          urgent_cost: number | null
+        }
+        Relationships: []
+      }
+      department_inventory: {
+        Row: {
+          department_id: string | null
+          department_name: string | null
+          last_updated: string | null
+          total_boxes: number | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       current_user_department: { Args: never; Returns: string }
