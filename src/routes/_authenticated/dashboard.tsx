@@ -99,8 +99,7 @@ function Dashboard() {
   const { data: user } = useCurrentUser();
   const isSuper = !!user?.roles.includes("super_admin");
   const isOfficeSvc = !!user?.roles.includes("office_services");
-  const isFinance = !!user?.roles.includes("finance");
-  const canSeeCosts = isSuper || isOfficeSvc || isFinance;
+  const canSeeCosts = isSuper || isOfficeSvc;
 
   const { data: stats } = useQuery({
     queryKey: ["dashboard-stats-v2", user?.userId],
