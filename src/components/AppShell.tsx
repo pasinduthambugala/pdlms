@@ -30,7 +30,6 @@ const NAV: NavItem[] = [
   { to: "/carts", label: "Carts", icon: Boxes },
   { to: "/retrievals", label: "Retrievals", icon: RefreshCw },
   { to: "/disposal", label: "Disposal Alerts", icon: AlertTriangle },
-  { to: "/search", label: "Search", icon: Search },
   { to: "/costs", label: "Cost Management", icon: DollarSign, roles: ["super_admin", "office_services", "dept_head"] },
   { to: "/admin", label: "Admin", icon: Users, roles: ["super_admin"] },
 ];
