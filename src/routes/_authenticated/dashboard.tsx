@@ -270,17 +270,6 @@ function Dashboard() {
         )}
       </div>
 
-      {/* Capacity */}
-      <Card className="p-5">
-        <div className="flex items-center justify-between mb-2">
-          <div>
-            <div className="text-sm font-medium text-slate-900">Overall Storage Capacity</div>
-            <div className="text-xs text-slate-500">{capacityUsed} of {capacityTotal} document slots used</div>
-          </div>
-          <div className="text-2xl font-bold text-slate-900">{capacityPct}%</div>
-        </div>
-        <Progress value={capacityPct} className="h-2" />
-      </Card>
 
       {/* Charts row 1 */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
