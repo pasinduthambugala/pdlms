@@ -275,6 +275,10 @@ function Dashboard() {
         )}
       </div>
 
+      {(user.roles.includes("dept_head") || isSuper || isOfficeSvc) && <ApprovalsPanel user={user} />}
+
+
+
 
       {/* Charts row 1 */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
