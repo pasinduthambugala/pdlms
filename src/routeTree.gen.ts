@@ -14,6 +14,7 @@ import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedSearchRouteImport } from './routes/_authenticated/search'
 import { Route as AuthenticatedRetrievalsRouteImport } from './routes/_authenticated/retrievals'
+import { Route as AuthenticatedProfileRouteImport } from './routes/_authenticated/profile'
 import { Route as AuthenticatedDocumentsRouteImport } from './routes/_authenticated/documents'
 import { Route as AuthenticatedDisposalRouteImport } from './routes/_authenticated/disposal'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
@@ -47,6 +48,11 @@ const AuthenticatedSearchRoute = AuthenticatedSearchRouteImport.update({
 const AuthenticatedRetrievalsRoute = AuthenticatedRetrievalsRouteImport.update({
   id: '/retrievals',
   path: '/retrievals',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedProfileRoute = AuthenticatedProfileRouteImport.update({
+  id: '/profile',
+  path: '/profile',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedDocumentsRoute = AuthenticatedDocumentsRouteImport.update({
@@ -111,6 +117,7 @@ export interface FileRoutesByFullPath {
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/disposal': typeof AuthenticatedDisposalRoute
   '/documents': typeof AuthenticatedDocumentsRoute
+  '/profile': typeof AuthenticatedProfileRoute
   '/retrievals': typeof AuthenticatedRetrievalsRoute
   '/search': typeof AuthenticatedSearchRoute
   '/carts/$cartId': typeof AuthenticatedCartsCartIdRoute
@@ -127,6 +134,7 @@ export interface FileRoutesByTo {
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/disposal': typeof AuthenticatedDisposalRoute
   '/documents': typeof AuthenticatedDocumentsRoute
+  '/profile': typeof AuthenticatedProfileRoute
   '/retrievals': typeof AuthenticatedRetrievalsRoute
   '/search': typeof AuthenticatedSearchRoute
   '/carts/$cartId': typeof AuthenticatedCartsCartIdRoute
@@ -145,6 +153,7 @@ export interface FileRoutesById {
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/disposal': typeof AuthenticatedDisposalRoute
   '/_authenticated/documents': typeof AuthenticatedDocumentsRoute
+  '/_authenticated/profile': typeof AuthenticatedProfileRoute
   '/_authenticated/retrievals': typeof AuthenticatedRetrievalsRoute
   '/_authenticated/search': typeof AuthenticatedSearchRoute
   '/_authenticated/carts/$cartId': typeof AuthenticatedCartsCartIdRoute
@@ -163,6 +172,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/disposal'
     | '/documents'
+    | '/profile'
     | '/retrievals'
     | '/search'
     | '/carts/$cartId'
@@ -179,6 +189,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/disposal'
     | '/documents'
+    | '/profile'
     | '/retrievals'
     | '/search'
     | '/carts/$cartId'
@@ -196,6 +207,7 @@ export interface FileRouteTypes {
     | '/_authenticated/dashboard'
     | '/_authenticated/disposal'
     | '/_authenticated/documents'
+    | '/_authenticated/profile'
     | '/_authenticated/retrievals'
     | '/_authenticated/search'
     | '/_authenticated/carts/$cartId'
@@ -248,6 +260,13 @@ declare module '@tanstack/react-router' {
       path: '/retrievals'
       fullPath: '/retrievals'
       preLoaderRoute: typeof AuthenticatedRetrievalsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/profile': {
+      id: '/_authenticated/profile'
+      path: '/profile'
+      fullPath: '/profile'
+      preLoaderRoute: typeof AuthenticatedProfileRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/documents': {
@@ -329,6 +348,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedDisposalRoute: typeof AuthenticatedDisposalRoute
   AuthenticatedDocumentsRoute: typeof AuthenticatedDocumentsRoute
+  AuthenticatedProfileRoute: typeof AuthenticatedProfileRoute
   AuthenticatedRetrievalsRoute: typeof AuthenticatedRetrievalsRoute
   AuthenticatedSearchRoute: typeof AuthenticatedSearchRoute
   AuthenticatedCartsCartIdRoute: typeof AuthenticatedCartsCartIdRoute
@@ -342,6 +362,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedDisposalRoute: AuthenticatedDisposalRoute,
   AuthenticatedDocumentsRoute: AuthenticatedDocumentsRoute,
+  AuthenticatedProfileRoute: AuthenticatedProfileRoute,
   AuthenticatedRetrievalsRoute: AuthenticatedRetrievalsRoute,
   AuthenticatedSearchRoute: AuthenticatedSearchRoute,
   AuthenticatedCartsCartIdRoute: AuthenticatedCartsCartIdRoute,

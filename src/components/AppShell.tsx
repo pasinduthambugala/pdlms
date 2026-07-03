@@ -7,7 +7,7 @@ import {
   AlertTriangle,
   DollarSign,
   Users,
-  Search,
+  UserCircle,
   LogOut,
 } from "lucide-react";
 import type { ReactNode } from "react";
@@ -31,6 +31,7 @@ const NAV: NavItem[] = [
   { to: "/retrievals", label: "Retrievals", icon: RefreshCw },
   { to: "/disposal", label: "Disposal Alerts", icon: AlertTriangle },
   { to: "/costs", label: "Cost Management", icon: DollarSign, roles: ["super_admin", "office_services", "dept_head"] },
+  { to: "/profile", label: "My Profile", icon: UserCircle },
   { to: "/admin", label: "Admin", icon: Users, roles: ["super_admin"] },
 ];
 

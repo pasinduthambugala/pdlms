@@ -1,11 +1,16 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useCurrentUser } from "@/hooks/use-current-user";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { toast } from "sonner";
 
-import { ROLE_LABELS } from "@/lib/types";
+import { ROLE_LABELS, type CartStatus } from "@/lib/types";
 import { StatusBadge } from "@/components/StatusBadge";
 import {
   ResponsiveContainer,
@@ -270,6 +275,10 @@ function Dashboard() {
         )}
       </div>
 
+      {(user.roles.includes("dept_head") || isSuper || isOfficeSvc) && <ApprovalsPanel user={user} />}
+
+
+
 
       {/* Charts row 1 */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
@@ -405,5 +414,127 @@ function Dashboard() {
         </Card>
       </div>
     </div>
+  );
+}
+
+const APPROVABLE: { status: CartStatus; label: string; approveTo: CartStatus; approveAction: string; rejectTo: CartStatus; rejectAction: string; extra?: any }[] = [
+  { status: "pending_approval", label: "Storage approval", approveTo: "approved", approveAction: "approve", rejectTo: "draft", rejectAction: "reject" },
+  { status: "pending_retrieval_approval", label: "Retrieval approval", approveTo: "retrieval_approved", approveAction: "retrieval_approved", rejectTo: "stored", rejectAction: "retrieval_rejected" },
+  { status: "pending_return_approval", label: "Return approval", approveTo: "return_approved", approveAction: "return_approved", rejectTo: "retrieved", rejectAction: "return_rejected" },
+];
+
+function ApprovalsPanel({ user }: { user: any }) {
+  const qc = useQueryClient();
+  const isSuper = user.roles.includes("super_admin");
+  const isOffice = user.roles.includes("office_services");
+  const scopeAll = isSuper || isOffice;
+  const today = new Date();
+  const monthAgo = new Date(today.getTime() - 30 * 86400000);
+  const [from, setFrom] = useState(monthAgo.toISOString().slice(0, 10));
+  const [to, setTo] = useState(today.toISOString().slice(0, 10));
+
+  const q = useQuery({
+    queryKey: ["dept-pending-approvals", user.userId, from, to, scopeAll],
+    queryFn: async () => {
+      let query = supabase
+        .from("carts")
+        .select("id,cart_number,status,created_at,updated_at,department_id,retrieval_type,departments(name)")
+        .in("status", APPROVABLE.map((a) => a.status))
+        .gte("updated_at", `${from}T00:00:00.000Z`)
+        .lte("updated_at", `${to}T23:59:59.999Z`)
+        .order("updated_at", { ascending: false });
+      if (!scopeAll) query = query.eq("department_id", user.profile.department_id);
+      const { data, error } = await query;
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
+  const act = useMutation({
+    mutationFn: async ({ cart, approve }: { cart: any; approve: boolean }) => {
+      const spec = APPROVABLE.find((a) => a.status === cart.status)!;
+      const status = approve ? spec.approveTo : spec.rejectTo;
+      const action = approve ? spec.approveAction : spec.rejectAction;
+      const extra: any = approve && spec.status === "pending_approval"
+        ? { approved_by: user.userId, approved_at: new Date().toISOString() }
+        : {};
+      const { error } = await supabase.from("carts").update({ status, ...extra }).eq("id", cart.id);
+      if (error) throw error;
+      await supabase.from("cart_approvals").insert({
+        cart_id: cart.id, action: action as any, actor_id: user.userId, comments: null,
+      });
+    },
+    onSuccess: (_d, v) => {
+      toast.success(v.approve ? "Approved" : "Rejected");
+      qc.invalidateQueries({ queryKey: ["dept-pending-approvals"] });
+      qc.invalidateQueries({ queryKey: ["dashboard-stats-v2"] });
+      qc.invalidateQueries({ queryKey: ["carts-with-counts"] });
+    },
+    onError: (e: any) => toast.error(e.message),
+  });
+
+  return (
+    <Card className="p-5">
+      <div className="flex items-center justify-between flex-wrap gap-3 mb-4">
+        <div>
+          <div className="text-sm font-semibold text-slate-900">Pending Approvals</div>
+          <div className="text-xs text-slate-500">
+            {scopeAll ? "All departments" : "Your department only"} · click Approve/Reject to act
+          </div>
+        </div>
+        <div className="flex items-end gap-2">
+          <div>
+            <Label htmlFor="apfrom" className="text-xs">From</Label>
+            <Input id="apfrom" type="date" value={from} onChange={(e) => setFrom(e.target.value)} className="h-8" />
+          </div>
+          <div>
+            <Label htmlFor="apto" className="text-xs">To</Label>
+            <Input id="apto" type="date" value={to} onChange={(e) => setTo(e.target.value)} className="h-8" />
+          </div>
+        </div>
+      </div>
+      {q.isLoading ? (
+        <div className="text-sm text-slate-400 py-6 text-center">Loading…</div>
+      ) : (q.data ?? []).length === 0 ? (
+        <div className="text-sm text-slate-400 py-6 text-center">No pending approvals in this date range.</div>
+      ) : (
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="text-xs text-slate-500 border-b">
+                <th className="text-left py-2">Cart</th>
+                <th className="text-left">Department</th>
+                <th className="text-left">Type</th>
+                <th className="text-left">Status</th>
+                <th className="text-left">Requested</th>
+                <th className="text-right">Action</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100">
+              {q.data!.map((c: any) => {
+                const spec = APPROVABLE.find((a) => a.status === c.status)!;
+                return (
+                  <tr key={c.id}>
+                    <td className="py-2">
+                      <Link to="/carts/$cartId" params={{ cartId: c.id }} className="font-medium text-slate-900 hover:underline">
+                        {c.cart_number}
+                      </Link>
+                    </td>
+                    <td className="text-slate-600">{c.departments?.name ?? "—"}</td>
+                    <td className="text-slate-600">{spec.label}{c.retrieval_type ? ` (${c.retrieval_type})` : ""}</td>
+                    <td><StatusBadge status={c.status as CartStatus} /></td>
+                    <td className="text-slate-500 text-xs">{new Date(c.updated_at).toLocaleString()}</td>
+                    <td className="text-right space-x-2">
+                      <Button size="sm" onClick={() => act.mutate({ cart: c, approve: true })} disabled={act.isPending}>Approve</Button>
+                      <Button size="sm" variant="destructive" onClick={() => act.mutate({ cart: c, approve: false })} disabled={act.isPending}>Reject</Button>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </Card>
   );
 }
