@@ -1,5 +1,6 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -20,25 +21,32 @@ function AuthPage() {
   const [fullName, setFullName] = useState("");
   const [employeeId, setEmployeeId] = useState("");
   const [department, setDepartment] = useState("");
-  const [role, setRole] = useState("");
+  const [jobTitle, setJobTitle] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+
+  const depsQ = useQuery({
+    queryKey: ["public-departments"],
+    queryFn: async () => (await supabase.from("departments").select("id,name").order("name")).data ?? [],
+  });
+  const jobsQ = useQuery({
+    queryKey: ["public-job-titles"],
+    queryFn: async () => (await supabase.from("job_titles").select("id,name").order("name")).data ?? [],
+  });
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     try {
       if (mode === "signup") {
-        if (password !== confirmPassword) {
-          throw new Error("Passwords do not match");
-        }
+        if (password !== confirmPassword) throw new Error("Passwords do not match");
         const { error } = await supabase.auth.signUp({
           email,
           password,
           options: {
             emailRedirectTo: window.location.origin,
-            data: { full_name: fullName, employee_id: employeeId, department, role },
+            data: { full_name: fullName, employee_id: employeeId, department, job_title: jobTitle },
           },
         });
         if (error) throw error;
@@ -78,20 +86,16 @@ function AuthPage() {
               </div>
               <div>
                 <Label htmlFor="department">Department</Label>
-                <select id="department" value={department} onChange={(e) => setDepartment(e.target.value)} className="w-full border rounded p-2">
+                <select id="department" value={department} onChange={(e) => setDepartment(e.target.value)} required className="w-full border rounded p-2">
                   <option value="">Select department</option>
-                  <option value="HR">HR</option>
-                  <option value="Engineering">Engineering</option>
-                  <option value="Sales">Sales</option>
+                  {depsQ.data?.map((d: any) => <option key={d.id} value={d.id}>{d.name}</option>)}
                 </select>
               </div>
               <div>
                 <Label htmlFor="role">Role</Label>
-                <select id="role" value={role} onChange={(e) => setRole(e.target.value)} className="w-full border rounded p-2">
+                <select id="role" value={jobTitle} onChange={(e) => setJobTitle(e.target.value)} required className="w-full border rounded p-2">
                   <option value="">Select role</option>
-                  <option value="Admin">Admin</option>
-                  <option value="User">User</option>
-                  <option value="Manager">Manager</option>
+                  {jobsQ.data?.map((j: any) => <option key={j.id} value={j.name}>{j.name}</option>)}
                 </select>
               </div>
               <div>
@@ -115,15 +119,11 @@ function AuthPage() {
         <div className="mt-4 text-sm text-center text-slate-600">
           {mode === "signin" ? (
             <>New here?{" "}
-              <button onClick={() => setMode("signup")} className="text-slate-900 font-medium hover:underline">
-                Create an account
-              </button>
+              <button type="button" onClick={() => setMode("signup")} className="text-slate-900 font-medium hover:underline">Create an account</button>
             </>
           ) : (
             <>Already have an account?{" "}
-              <button onClick={() => setMode("signin")} className="text-slate-900 font-medium hover:underline">
-                Sign in
-              </button>
+              <button type="button" onClick={() => setMode("signin")} className="text-slate-900 font-medium hover:underline">Sign in</button>
             </>
           )}
         </div>

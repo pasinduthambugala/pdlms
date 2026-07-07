@@ -1,5 +1,4 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
+import { createFileRoute, useNavigate, Navigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
@@ -13,39 +12,39 @@ export const Route = createFileRoute("/_authenticated/carts/new")({
   component: NewCart,
 });
 
+const DEFAULT_RETENTION_DAYS = 365 * 7; // 7 years default; not user-editable here
+
 function NewCart() {
   const { data: user } = useCurrentUser();
   const navigate = useNavigate();
   const [cartNumber, setCartNumber] = useState("");
-  const [retention, setRetention] = useState(365);
-  const [deptId, setDeptId] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const { data: departments } = useQuery({
-    queryKey: ["departments"],
-    queryFn: async () => {
-      const { data, error } = await supabase.from("departments").select("*").order("name");
-      if (error) throw error;
-      return data;
-    },
-  });
-
-  // Default to user's department.
-  if (deptId === "" && user?.profile.department_id) setDeptId(user.profile.department_id);
+  // Block department heads from creating carts.
+  if (user && user.roles.includes("dept_head") && !user.roles.includes("super_admin")) {
+    return <Navigate to="/carts" />;
+  }
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user) return;
+    if (!user.profile.department_id) {
+      toast.error("Your profile has no department assigned. Ask an admin.");
+      return;
+    }
     setLoading(true);
     try {
       const { data, error } = await supabase.from("carts").insert({
         cart_number: cartNumber,
-        retention_days: retention,
-        department_id: deptId,
+        retention_days: DEFAULT_RETENTION_DAYS,
+        department_id: user.profile.department_id,
         created_by: user.userId,
         status: "draft",
       }).select().single();
       if (error) throw error;
+      await supabase.from("cart_approvals").insert({
+        cart_id: data.id, action: "create", actor_id: user.userId,
+      });
       toast.success("Cart created as draft");
       navigate({ to: "/carts/$cartId", params: { cartId: data.id } });
     } catch (err: any) {
@@ -64,20 +63,10 @@ function NewCart() {
             <Label htmlFor="cn">Cart number (from storage provider)</Label>
             <Input id="cn" value={cartNumber} onChange={(e) => setCartNumber(e.target.value)} required />
           </div>
-          <div>
-            <Label htmlFor="rt">Retention period (days)</Label>
-            <Input id="rt" type="number" min={1} value={retention} onChange={(e) => setRetention(parseInt(e.target.value))} required />
-          </div>
-          <div>
-            <Label htmlFor="dept">Department</Label>
-            <select id="dept" className="w-full border border-slate-200 rounded-md px-3 py-2 text-sm"
-              value={deptId} onChange={(e) => setDeptId(e.target.value)} required>
-              <option value="">Select…</option>
-              {departments?.map((d: any) => (
-                <option key={d.id} value={d.id}>{d.name}</option>
-              ))}
-            </select>
-          </div>
+          <p className="text-xs text-slate-500">
+            Department is set automatically from your profile. Retention is applied per
+            document — you do not enter a retention period here.
+          </p>
           <Button type="submit" disabled={loading || !user?.profile.is_active}>
             {loading ? "Creating…" : "Create cart"}
           </Button>

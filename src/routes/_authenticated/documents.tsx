@@ -12,9 +12,13 @@ import {
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
 import { useCurrentUser } from "@/hooks/use-current-user";
-import { Plus, Search, Pencil, Eye } from "lucide-react";
+import { Plus, Search, Eye, CalendarIcon } from "lucide-react";
 import { toast } from "sonner";
+import { format } from "date-fns";
+import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_authenticated/documents")({
   component: DocsList,
@@ -26,6 +30,12 @@ function DocsList() {
   const [search, setSearch] = useState("");
   const [registerOpen, setRegisterOpen] = useState(false);
   const [detailDoc, setDetailDoc] = useState<any>(null);
+
+  const canRegister =
+    !!user && (user.roles.includes("super_admin") ||
+      user.roles.includes("employee") ||
+      user.roles.includes("office_services")) &&
+    !user.roles.includes("dept_head");
 
 
   const { data } = useQuery({
@@ -59,12 +69,13 @@ function DocsList() {
           <p className="text-sm text-slate-500">All documents you have access to.</p>
         </div>
         <Dialog open={registerOpen} onOpenChange={setRegisterOpen}>
-          
+          {canRegister && (
             <DialogTrigger asChild>
               <Button disabled={!user?.profile.is_active}>
                 <Plus className="w-4 h-4 mr-2" /> Register document
               </Button>
             </DialogTrigger>
+          )}
             <RegisterDocDialog
               onDone={() => {
                 setRegisterOpen(false);
@@ -96,6 +107,7 @@ function DocsList() {
               <th className="text-left px-4 py-3">Cart Number</th>
               <th className="text-left px-4 py-3">File Number</th>
               <th className="text-left px-4 py-3">File Name</th>
+              <th className="text-left px-4 py-3">Registered Date</th>
               <th className="text-right px-4 py-3">Actions</th>
             </tr>
           </thead>
@@ -118,6 +130,11 @@ function DocsList() {
                   </td>
                   <td className="px-4 py-3 text-slate-500">{d.file_number ?? "—"}</td>
                   <td className="px-4 py-3 text-slate-500">{d.file_name ?? "—"}</td>
+                  <td className="px-4 py-3 text-slate-600">
+                    {d.registration_date
+                      ? format(new Date(d.registration_date), "PP")
+                      : format(new Date(d.created_at), "PP")}
+                  </td>
                   <td className="px-4 py-3 text-right">
                     <Button size="sm" variant="outline" onClick={() => setDetailDoc(d)}>
                       <Eye className="w-4 h-4 mr-1" /> View
@@ -127,7 +144,7 @@ function DocsList() {
               ))
             ) : (
               <tr>
-                <td colSpan={7} className="px-4 py-8 text-center text-slate-400">
+                <td colSpan={8} className="px-4 py-8 text-center text-slate-400">
                   No documents found.
                 </td>
               </tr>
@@ -175,6 +192,7 @@ function RegisterDocDialog({ onDone }: { onDone: () => void }) {
   const [retention, setRetention] = useState(365);
   const [fileNum, setFileNum] = useState("");
   const [fileName, setFileName] = useState("");
+  const [regDate, setRegDate] = useState<Date>(new Date());
 
   const mut = useMutation({
     mutationFn: async () => {
@@ -191,12 +209,14 @@ function RegisterDocDialog({ onDone }: { onDone: () => void }) {
         file_name: fileName || null,
         department_id: departmentId,
         created_by: user.userId,
+        registration_date: regDate.toISOString(),
       });
       if (error) throw error;
     },
     onSuccess: () => {
       toast.success("Document registered");
       setName(""); setNum(""); setFileNum(""); setFileName(""); setCartId("none");
+      setRegDate(new Date());
       onDone();
     },
     onError: (e: any) => {
@@ -234,6 +254,23 @@ function RegisterDocDialog({ onDone }: { onDone: () => void }) {
           <div className="col-span-2">
             <Label>File name (optional)</Label>
             <Input value={fileName} onChange={(e) => setFileName(e.target.value)} />
+          </div>
+          <div className="col-span-2">
+            <Label>Registered date</Label>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button type="button" variant="outline"
+                  className={cn("w-full justify-start text-left font-normal", !regDate && "text-muted-foreground")}>
+                  <CalendarIcon className="w-4 h-4 mr-2" />
+                  {regDate ? format(regDate, "PPP") : "Pick a date"}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0 pointer-events-auto" align="start">
+                <Calendar mode="single" selected={regDate}
+                  onSelect={(d) => d && setRegDate(d)} initialFocus
+                  className="p-3 pointer-events-auto" />
+              </PopoverContent>
+            </Popover>
           </div>
           <div className="col-span-2">
             <Label>Cart (optional — can be assigned later)</Label>
