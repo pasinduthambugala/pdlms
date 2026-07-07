@@ -89,6 +89,11 @@ function CartsList() {
         )}
       </header>
 
+      {user && (user.roles.includes("dept_head") || user.roles.includes("super_admin") || user.roles.includes("office_services")) && (
+        <ApprovalsPanel user={user} />
+      )}
+
+
       <Card className="p-4 mb-4 flex flex-col lg:flex-row gap-3 lg:items-center lg:justify-between">
         <div className="relative flex-1 max-w-md">
           <Search className="w-4 h-4 absolute left-3 top-2.5 text-slate-400" />
