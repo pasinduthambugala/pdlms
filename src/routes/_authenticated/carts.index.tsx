@@ -194,11 +194,12 @@ function CartViewDialog({ cartId, onClose }: { cartId: string | null; onClose: (
     queryFn: async () => {
       const { data, error } = await supabase
         .from("carts")
-        .select("*, departments(name), documents(id, document_number, document_name)")
+        .select("*, departments(name), documents(id, document_number, document_name, retention_period, file_number, file_name, registration_date, created_at)")
         .eq("id", cartId!)
         .single();
       if (error) throw error;
       return data;
+
     },
   });
 
