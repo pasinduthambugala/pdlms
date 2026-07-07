@@ -238,32 +238,39 @@ function CartViewDialog({ cartId, onClose }: { cartId: string | null; onClose: (
 
             <div className="mt-4">
               <h3 className="font-semibold text-slate-900 mb-2">Documents in this cart ({count})</h3>
-              <div className="border border-slate-100 rounded-md overflow-hidden">
+              <div className="border border-slate-100 rounded-md overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead className="bg-slate-50 text-xs uppercase text-slate-500">
                     <tr>
-                      <th className="text-left px-3 py-2">Document Number</th>
                       <th className="text-left px-3 py-2">Document Name</th>
-                      <th className="text-right px-3 py-2">Status</th>
+                      <th className="text-left px-3 py-2">Document Number</th>
+                      <th className="text-left px-3 py-2">Retention Period</th>
+                      <th className="text-left px-3 py-2">File Number</th>
+                      <th className="text-left px-3 py-2">File Name</th>
+                      <th className="text-left px-3 py-2">Registered Date</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100">
                     {docs.length ? docs.map((d) => (
                       <tr key={d.id}>
-                        <td className="px-3 py-2 font-mono text-xs">{d.document_number}</td>
                         <td className="px-3 py-2">{d.document_name}</td>
-                        <td className="px-3 py-2 text-right">
-                          <span className="inline-flex px-2 py-0.5 rounded-full text-xs bg-emerald-50 text-emerald-700">
-                            Active
-                          </span>
+                        <td className="px-3 py-2 font-mono text-xs">{d.document_number}</td>
+                        <td className="px-3 py-2">{d.retention_period} days</td>
+                        <td className="px-3 py-2">{d.file_number ?? "—"}</td>
+                        <td className="px-3 py-2">{d.file_name ?? "—"}</td>
+                        <td className="px-3 py-2 text-slate-500">
+                          {d.registration_date
+                            ? new Date(d.registration_date).toLocaleDateString()
+                            : d.created_at ? new Date(d.created_at).toLocaleDateString() : "—"}
                         </td>
                       </tr>
                     )) : (
-                      <tr><td colSpan={3} className="px-3 py-4 text-center text-slate-400">No documents.</td></tr>
+                      <tr><td colSpan={6} className="px-3 py-4 text-center text-slate-400">No documents.</td></tr>
                     )}
                   </tbody>
                 </table>
               </div>
+
             </div>
 
             <DialogFooter className="mt-4">
