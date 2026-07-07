@@ -19,50 +19,63 @@ function Costs() {
   const { data: user } = useCurrentUser();
   const qc = useQueryClient();
   const isOffice = user?.roles.includes("super_admin") || user?.roles.includes("office_services");
+  const deptFilter = !isOffice ? user?.profile.department_id ?? null : null;
 
   const posQ = useQuery({
-    queryKey: ["pos"],
+    queryKey: ["pos", deptFilter],
+    enabled: !!user,
     queryFn: async () => {
-      const { data, error } = await supabase
+      let q = supabase
         .from("purchase_orders")
         .select("*, departments(name)")
         .order("created_at", { ascending: false });
+      if (deptFilter) q = q.eq("department_id", deptFilter);
+      const { data, error } = await q;
       if (error) throw error;
       return data;
     },
   });
 
   const allocQ = useQuery({
-    queryKey: ["allocations"],
+    queryKey: ["allocations", deptFilter],
+    enabled: !!user,
     queryFn: async () => {
-      const { data, error } = await supabase
+      let q = supabase
         .from("cost_allocations")
         .select("*, departments(name), purchase_orders(po_number, po_type)")
         .order("created_at", { ascending: false });
+      if (deptFilter) q = q.eq("department_id", deptFilter);
+      const { data, error } = await q;
       if (error) throw error;
       return data;
     },
   });
 
   const inventoryQ = useQuery({
-    queryKey: ["dept-inventory"],
+    queryKey: ["dept-inventory", deptFilter],
+    enabled: !!user,
     queryFn: async () => {
-      const { data, error } = await supabase
+      let q = supabase
         .from("department_inventory" as any)
         .select("*")
         .order("department_name");
+      if (deptFilter) q = q.eq("department_id", deptFilter);
+      const { data, error } = await q;
       if (error) throw error;
       return data as any[];
     },
   });
 
   const reportQ = useQuery({
-    queryKey: ["dept-cost-report"],
+    queryKey: ["dept-cost-report", deptFilter],
+    enabled: !!user,
     queryFn: async () => {
-      const { data, error } = await supabase
+      let q = supabase
         .from("department_cost_report" as any)
         .select("*")
         .order("department_name");
+      if (deptFilter) q = q.eq("department_id", deptFilter);
+      const { data, error } = await q;
       if (error) throw error;
       return data as any[];
     },
