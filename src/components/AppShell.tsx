@@ -54,7 +54,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       <aside className="w-64 bg-white border-r border-slate-200 flex flex-col">
         <div className="px-5 py-5 border-b border-slate-200">
           <div className="text-xl font-bold text-slate-900">DARMS</div>
-          <div className="text-xs text-slate-500 mt-0.5">Document Archival & Retrieval Management System</div>
+          <div className="text-xs text-slate-500 mt-0.5">Document Archive & Retrieval Management System</div>
         </div>
         <nav className="flex-1 px-3 py-4 space-y-1 overflow-auto">
           {items.map((item) => {
