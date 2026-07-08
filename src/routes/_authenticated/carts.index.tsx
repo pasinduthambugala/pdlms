@@ -249,7 +249,7 @@ function CartViewDialog({ cartId, onClose }: { cartId: string | null; onClose: (
                       <tr key={d.id}>
                         <td className="px-3 py-2">{d.document_name}</td>
                         <td className="px-3 py-2 font-mono text-xs">{d.document_number}</td>
-                        <td className="px-3 py-2">{d.retention_period} days</td>
+                        <td className="px-3 py-2">{d.retention_period != null ? `${d.retention_period} years` : "—"}</td>
                         <td className="px-3 py-2">{d.file_number ?? "—"}</td>
                         <td className="px-3 py-2">{d.file_name ?? "—"}</td>
                         <td className="px-3 py-2 text-slate-500">
