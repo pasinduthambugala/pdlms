@@ -8,6 +8,7 @@ import {
   DollarSign,
   Users,
   UserCircle,
+  CheckSquare,
   LogOut,
 } from "lucide-react";
 import type { ReactNode } from "react";
