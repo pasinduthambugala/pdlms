@@ -204,7 +204,7 @@ function RegisterDocDialog({ onDone }: { onDone: () => void }) {
         cart_id: chosen ? chosen.id : null,
         document_name: name,
         document_number: num,
-        retention_period: retention,
+        retention_period: retention.trim() === "" ? null : parseInt(retention, 10),
         file_number: fileNum || null,
         file_name: fileName || null,
         department_id: departmentId,
