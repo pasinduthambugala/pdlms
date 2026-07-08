@@ -117,7 +117,7 @@ function DocsList() {
                 <tr key={d.id}>
                   <td className="px-4 py-3 font-medium text-slate-900">{d.document_name}</td>
                   <td className="px-4 py-3 font-mono text-xs">{d.document_number}</td>
-                  <td className="px-4 py-3 text-slate-600">{d.retention_period} days</td>
+                  <td className="px-4 py-3 text-slate-600">{d.retention_period != null ? `${d.retention_period} years` : "—"}</td>
                   <td className="px-4 py-3">
                     {d.cart_id && d.carts ? (
                       <Link to="/carts/$cartId" params={{ cartId: d.cart_id }}
