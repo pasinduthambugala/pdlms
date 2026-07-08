@@ -407,7 +407,7 @@ function DocumentDetailDialog({
         <div className="space-y-2">
           <p><strong>Name:</strong> {document?.document_name ?? "—"}</p>
           <p><strong>Number:</strong> {document?.document_number ?? "—"}</p>
-          <p><strong>Retention:</strong> {document?.retention_period ?? "—"} days</p>
+          <p><strong>Retention:</strong> {document?.retention_period != null ? `${document.retention_period} years` : "—"}</p>
           <p><strong>File #:</strong> {document?.file_number ?? "—"}</p>
           <p><strong>File name:</strong> {document?.file_name ?? "—"}</p>
           <p><strong>Cart:</strong> {document?.carts?.cart_number ?? "Unassigned"}</p>
