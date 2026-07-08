@@ -1,11 +1,10 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { StatusBadge } from "@/components/StatusBadge";
 import { useCurrentUser } from "@/hooks/use-current-user";
 import { Plus, Search, Eye, CalendarIcon } from "lucide-react";
@@ -18,8 +17,6 @@ import {
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { Progress } from "@/components/ui/progress";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { toast } from "sonner";
 import { STATUS_LABELS, type CartStatus } from "@/lib/types";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
@@ -89,9 +86,6 @@ function CartsList() {
         )}
       </header>
 
-      {user && (user.roles.includes("dept_head") || user.roles.includes("super_admin") || user.roles.includes("office_services")) && (
-        <ApprovalsPanel user={user} />
-      )}
 
 
       <Card className="p-4 mb-4 flex flex-col lg:flex-row gap-3 lg:items-center lg:justify-between">
@@ -187,7 +181,7 @@ function DateField({ label, value, onChange }: { label: string; value?: Date; on
   );
 }
 
-function CartViewDialog({ cartId, onClose }: { cartId: string | null; onClose: () => void }) {
+export function CartViewDialog({ cartId, onClose }: { cartId: string | null; onClose: () => void }) {
   const { data: cart } = useQuery({
     queryKey: ["cart-view", cartId],
     enabled: !!cartId,
@@ -255,7 +249,7 @@ function CartViewDialog({ cartId, onClose }: { cartId: string | null; onClose: (
                       <tr key={d.id}>
                         <td className="px-3 py-2">{d.document_name}</td>
                         <td className="px-3 py-2 font-mono text-xs">{d.document_number}</td>
-                        <td className="px-3 py-2">{d.retention_period} days</td>
+                        <td className="px-3 py-2">{d.retention_period != null ? `${d.retention_period} years` : "—"}</td>
                         <td className="px-3 py-2">{d.file_number ?? "—"}</td>
                         <td className="px-3 py-2">{d.file_name ?? "—"}</td>
                         <td className="px-3 py-2 text-slate-500">
@@ -283,161 +277,6 @@ function CartViewDialog({ cartId, onClose }: { cartId: string | null; onClose: (
         )}
       </DialogContent>
     </Dialog>
-  );
-}
-
-type ApprovalSpec = {
-  status: CartStatus;
-  label: string;
-  approveTo: CartStatus;
-  approveAction: string;
-  rejectTo: CartStatus;
-  rejectAction: string;
-};
-
-const CART_APPROVALS: ApprovalSpec[] = [
-  { status: "pending_approval", label: "Storage approval", approveTo: "approved", approveAction: "approve", rejectTo: "draft", rejectAction: "reject" },
-  { status: "pending_return_approval", label: "Return approval", approveTo: "return_approved", approveAction: "return_approved", rejectTo: "retrieved", rejectAction: "return_rejected" },
-];
-
-const RETRIEVAL_APPROVALS: ApprovalSpec[] = [
-  { status: "pending_retrieval_approval", label: "Retrieval approval", approveTo: "retrieval_approved", approveAction: "retrieval_approved", rejectTo: "stored", rejectAction: "retrieval_rejected" },
-];
-
-function ApprovalsPanel({ user }: { user: any }) {
-  const scopeAll = user.roles.includes("super_admin") || user.roles.includes("office_services");
-  const today = new Date();
-  const monthAgo = new Date(today.getTime() - 30 * 86400000);
-  const [from, setFrom] = useState(monthAgo.toISOString().slice(0, 10));
-  const [to, setTo] = useState(today.toISOString().slice(0, 10));
-
-  return (
-    <Card className="p-5 mb-4">
-      <div className="flex items-center justify-between flex-wrap gap-3 mb-4">
-        <div>
-          <div className="text-sm font-semibold text-slate-900">Pending Approvals</div>
-          <div className="text-xs text-slate-500">
-            {scopeAll ? "All departments" : "Your department only"}
-          </div>
-        </div>
-        <div className="flex items-end gap-2">
-          <div>
-            <Label htmlFor="apfrom" className="text-xs">From</Label>
-            <Input id="apfrom" type="date" value={from} onChange={(e) => setFrom(e.target.value)} className="h-8" />
-          </div>
-          <div>
-            <Label htmlFor="apto" className="text-xs">To</Label>
-            <Input id="apto" type="date" value={to} onChange={(e) => setTo(e.target.value)} className="h-8" />
-          </div>
-        </div>
-      </div>
-
-      <Tabs defaultValue="cart">
-        <TabsList>
-          <TabsTrigger value="cart">Cart Approval</TabsTrigger>
-          <TabsTrigger value="retrieval">Retrieval Approval</TabsTrigger>
-        </TabsList>
-        <TabsContent value="cart">
-          <ApprovalsTable user={user} specs={CART_APPROVALS} scopeAll={scopeAll} from={from} to={to} kind="cart" />
-        </TabsContent>
-        <TabsContent value="retrieval">
-          <ApprovalsTable user={user} specs={RETRIEVAL_APPROVALS} scopeAll={scopeAll} from={from} to={to} kind="retrieval" />
-        </TabsContent>
-      </Tabs>
-    </Card>
-  );
-}
-
-function ApprovalsTable({
-  user, specs, scopeAll, from, to, kind,
-}: {
-  user: any; specs: ApprovalSpec[]; scopeAll: boolean; from: string; to: string; kind: string;
-}) {
-  const qc = useQueryClient();
-  const [viewId, setViewId] = useState<string | null>(null);
-
-  const q = useQuery({
-    queryKey: ["cart-approvals", kind, user.userId, from, to, scopeAll],
-    queryFn: async () => {
-      let query = supabase
-        .from("carts")
-        .select("id,cart_number,status,created_at,updated_at,department_id,retrieval_type,departments(name)")
-        .in("status", specs.map((s) => s.status))
-        .gte("updated_at", `${from}T00:00:00.000Z`)
-        .lte("updated_at", `${to}T23:59:59.999Z`)
-        .order("updated_at", { ascending: false });
-      if (!scopeAll) query = query.eq("department_id", user.profile.department_id);
-      const { data, error } = await query;
-      if (error) throw error;
-      return data ?? [];
-    },
-  });
-
-  const act = useMutation({
-    mutationFn: async ({ cart, approve }: { cart: any; approve: boolean }) => {
-      const spec = specs.find((s) => s.status === cart.status)!;
-      const status = approve ? spec.approveTo : spec.rejectTo;
-      const action = approve ? spec.approveAction : spec.rejectAction;
-      const extra: any = approve && spec.status === "pending_approval"
-        ? { approved_by: user.userId, approved_at: new Date().toISOString() }
-        : {};
-      const { error } = await supabase.from("carts").update({ status, ...extra }).eq("id", cart.id);
-      if (error) throw error;
-      await supabase.from("cart_approvals").insert({
-        cart_id: cart.id, action: action as any, actor_id: user.userId, comments: null,
-      });
-    },
-    onSuccess: (_d, v) => {
-      toast.success(v.approve ? "Approved" : "Rejected");
-      qc.invalidateQueries({ queryKey: ["cart-approvals"] });
-      qc.invalidateQueries({ queryKey: ["carts-with-counts"] });
-    },
-    onError: (e: any) => toast.error(e.message),
-  });
-
-  if (q.isLoading) return <div className="text-sm text-slate-400 py-6 text-center">Loading…</div>;
-  if ((q.data ?? []).length === 0)
-    return <div className="text-sm text-slate-400 py-6 text-center">No pending approvals in this date range.</div>;
-
-  return (
-    <>
-      <div className="overflow-x-auto">
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="text-xs text-slate-500 border-b">
-              <th className="text-left py-2">Cart</th>
-              <th className="text-left">Department</th>
-              <th className="text-left">Type</th>
-              <th className="text-left">Status</th>
-              <th className="text-left">Requested</th>
-              <th className="text-right">Action</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-slate-100">
-            {q.data!.map((c: any) => {
-              const spec = specs.find((s) => s.status === c.status)!;
-              return (
-                <tr key={c.id}>
-                  <td className="py-2 font-medium text-slate-900">{c.cart_number}</td>
-                  <td className="text-slate-600">{c.departments?.name ?? "—"}</td>
-                  <td className="text-slate-600">{spec.label}{c.retrieval_type ? ` (${c.retrieval_type})` : ""}</td>
-                  <td><StatusBadge status={c.status as CartStatus} /></td>
-                  <td className="text-slate-500 text-xs">{new Date(c.updated_at).toLocaleString()}</td>
-                  <td className="text-right space-x-2 whitespace-nowrap">
-                    <Button size="sm" variant="outline" onClick={() => setViewId(c.id)}>
-                      <Eye className="w-4 h-4 mr-1" /> View
-                    </Button>
-                    <Button size="sm" onClick={() => act.mutate({ cart: c, approve: true })} disabled={act.isPending}>Approve</Button>
-                    <Button size="sm" variant="destructive" onClick={() => act.mutate({ cart: c, approve: false })} disabled={act.isPending}>Reject</Button>
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
-      </div>
-      <CartViewDialog cartId={viewId} onClose={() => setViewId(null)} />
-    </>
   );
 }
 

@@ -8,6 +8,7 @@ import {
   DollarSign,
   Users,
   UserCircle,
+  CheckSquare,
   LogOut,
 } from "lucide-react";
 import type { ReactNode } from "react";
@@ -28,6 +29,7 @@ const NAV: NavItem[] = [
   { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { to: "/documents", label: "Documents", icon: FileText },
   { to: "/carts", label: "Carts", icon: Boxes },
+  { to: "/approvals", label: "Approvals", icon: CheckSquare, roles: ["super_admin", "office_services", "dept_head"] },
   { to: "/retrievals", label: "Retrievals", icon: RefreshCw },
   { to: "/disposal", label: "Disposal Alerts", icon: AlertTriangle },
   { to: "/costs", label: "Cost Management", icon: DollarSign, roles: ["super_admin", "office_services", "dept_head"] },
@@ -52,7 +54,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       <aside className="w-64 bg-white border-r border-slate-200 flex flex-col">
         <div className="px-5 py-5 border-b border-slate-200">
           <div className="text-xl font-bold text-slate-900">DARMS</div>
-          <div className="text-xs text-slate-500 mt-0.5">Document Archival & Retrieval Management System</div>
+          <div className="text-xs text-slate-500 mt-0.5">Document Archive & Retrieval Management System</div>
         </div>
         <nav className="flex-1 px-3 py-4 space-y-1 overflow-auto">
           {items.map((item) => {

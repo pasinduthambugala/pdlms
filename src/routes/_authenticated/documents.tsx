@@ -117,7 +117,7 @@ function DocsList() {
                 <tr key={d.id}>
                   <td className="px-4 py-3 font-medium text-slate-900">{d.document_name}</td>
                   <td className="px-4 py-3 font-mono text-xs">{d.document_number}</td>
-                  <td className="px-4 py-3 text-slate-600">{d.retention_period} days</td>
+                  <td className="px-4 py-3 text-slate-600">{d.retention_period != null ? `${d.retention_period} years` : "—"}</td>
                   <td className="px-4 py-3">
                     {d.cart_id && d.carts ? (
                       <Link to="/carts/$cartId" params={{ cartId: d.cart_id }}
@@ -189,7 +189,7 @@ function RegisterDocDialog({ onDone }: { onDone: () => void }) {
   const [cartId, setCartId] = useState<string>("none");
   const [name, setName] = useState("");
   const [num, setNum] = useState("");
-  const [retention, setRetention] = useState(365);
+  const [retention, setRetention] = useState<string>("");
   const [fileNum, setFileNum] = useState("");
   const [fileName, setFileName] = useState("");
   const [regDate, setRegDate] = useState<Date>(new Date());
@@ -204,7 +204,7 @@ function RegisterDocDialog({ onDone }: { onDone: () => void }) {
         cart_id: chosen ? chosen.id : null,
         document_name: name,
         document_number: num,
-        retention_period: retention,
+        retention_period: retention.trim() === "" ? null : parseInt(retention, 10),
         file_number: fileNum || null,
         file_name: fileName || null,
         department_id: departmentId,
@@ -243,9 +243,9 @@ function RegisterDocDialog({ onDone }: { onDone: () => void }) {
             <Input value={num} onChange={(e) => setNum(e.target.value)} required />
           </div>
           <div>
-            <Label>Retention period (days)</Label>
-            <Input type="number" min={1} value={retention}
-              onChange={(e) => setRetention(parseInt(e.target.value) || 0)} required />
+            <Label>Retention period (years, optional)</Label>
+            <Input type="number" min={0} value={retention}
+              onChange={(e) => setRetention(e.target.value)} placeholder="e.g. 5" />
           </div>
           <div>
             <Label>File number (optional)</Label>
@@ -407,7 +407,7 @@ function DocumentDetailDialog({
         <div className="space-y-2">
           <p><strong>Name:</strong> {document?.document_name ?? "—"}</p>
           <p><strong>Number:</strong> {document?.document_number ?? "—"}</p>
-          <p><strong>Retention:</strong> {document?.retention_period ?? "—"} days</p>
+          <p><strong>Retention:</strong> {document?.retention_period != null ? `${document.retention_period} years` : "—"}</p>
           <p><strong>File #:</strong> {document?.file_number ?? "—"}</p>
           <p><strong>File name:</strong> {document?.file_name ?? "—"}</p>
           <p><strong>Cart:</strong> {document?.carts?.cart_number ?? "Unassigned"}</p>

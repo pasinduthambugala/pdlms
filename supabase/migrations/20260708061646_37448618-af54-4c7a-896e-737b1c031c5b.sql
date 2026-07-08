@@ -1,0 +1,1 @@
+ALTER TABLE public.documents ALTER COLUMN retention_period DROP NOT NULL;
