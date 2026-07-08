@@ -181,7 +181,7 @@ function DateField({ label, value, onChange }: { label: string; value?: Date; on
   );
 }
 
-function CartViewDialog({ cartId, onClose }: { cartId: string | null; onClose: () => void }) {
+export function CartViewDialog({ cartId, onClose }: { cartId: string | null; onClose: () => void }) {
   const { data: cart } = useQuery({
     queryKey: ["cart-view", cartId],
     enabled: !!cartId,
