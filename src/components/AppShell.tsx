@@ -29,6 +29,7 @@ const NAV: NavItem[] = [
   { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { to: "/documents", label: "Documents", icon: FileText },
   { to: "/carts", label: "Carts", icon: Boxes },
+  { to: "/approvals", label: "Approvals", icon: CheckSquare, roles: ["super_admin", "office_services", "dept_head"] },
   { to: "/retrievals", label: "Retrievals", icon: RefreshCw },
   { to: "/disposal", label: "Disposal Alerts", icon: AlertTriangle },
   { to: "/costs", label: "Cost Management", icon: DollarSign, roles: ["super_admin", "office_services", "dept_head"] },
