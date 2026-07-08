@@ -250,7 +250,7 @@ export type Database = {
           file_number: string | null
           id: string
           registration_date: string | null
-          retention_period: number
+          retention_period: number | null
         }
         Insert: {
           cart_id?: string | null
@@ -263,7 +263,7 @@ export type Database = {
           file_number?: string | null
           id?: string
           registration_date?: string | null
-          retention_period: number
+          retention_period?: number | null
         }
         Update: {
           cart_id?: string | null
@@ -276,7 +276,7 @@ export type Database = {
           file_number?: string | null
           id?: string
           registration_date?: string | null
-          retention_period?: number
+          retention_period?: number | null
         }
         Relationships: [
           {
