@@ -111,7 +111,7 @@ function CartDetail() {
             <div className="border-t border-slate-100 mt-2 pt-2">
               {docsQ.data?.length ? (
                 <table className="w-full text-sm">
-                  <thead><tr className="text-xs text-slate-500"><th className="text-left py-2">Doc #</th><th className="text-left">Name</th><th className="text-left">File</th><th></th></tr></thead>
+                  <thead><tr className="text-xs text-slate-500"><th className="text-left py-2">Doc #</th><th className="text-left">Name</th><th className="text-left">Retention</th><th className="text-left">File</th><th></th></tr></thead>
                   <tbody className="divide-y divide-slate-100">
                     {docsQ.data.map((d: any) => (
                       <tr key={d.id}>
