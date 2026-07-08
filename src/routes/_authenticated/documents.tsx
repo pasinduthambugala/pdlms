@@ -243,9 +243,9 @@ function RegisterDocDialog({ onDone }: { onDone: () => void }) {
             <Input value={num} onChange={(e) => setNum(e.target.value)} required />
           </div>
           <div>
-            <Label>Retention period (days)</Label>
-            <Input type="number" min={1} value={retention}
-              onChange={(e) => setRetention(parseInt(e.target.value) || 0)} required />
+            <Label>Retention period (years, optional)</Label>
+            <Input type="number" min={0} value={retention}
+              onChange={(e) => setRetention(e.target.value)} placeholder="e.g. 5" />
           </div>
           <div>
             <Label>File number (optional)</Label>
