@@ -318,19 +318,41 @@ function RegisterDocDialog({ onDone }: { onDone: () => void }) {
               </PopoverContent>
             </Popover>
           </div>
-          <div className="col-span-2">
+          <div className="col-span-2 space-y-2">
             <Label>Cart (optional — can be assigned later)</Label>
-            <Select value={cartId} onValueChange={setCartId}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="none">No cart (assign later)</SelectItem>
-                {carts?.map((c: any) => (
-                  <SelectItem key={c.id} value={c.id}>
-                    {c.cart_number} ({c.status})
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <div className="flex gap-2 text-xs">
+              <button type="button"
+                className={cn("px-3 py-1 rounded-md border", cartMode === "existing" ? "bg-slate-900 text-white border-slate-900" : "bg-white text-slate-600 border-slate-200")}
+                onClick={() => setCartMode("existing")}>
+                Choose existing
+              </button>
+              <button type="button"
+                className={cn("px-3 py-1 rounded-md border", cartMode === "new" ? "bg-slate-900 text-white border-slate-900" : "bg-white text-slate-600 border-slate-200")}
+                onClick={() => setCartMode("new")}>
+                Enter cart number
+              </button>
+            </div>
+            {cartMode === "existing" ? (
+              <Select value={cartId} onValueChange={setCartId}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">No cart (assign later)</SelectItem>
+                  {carts?.map((c: any) => (
+                    <SelectItem key={c.id} value={c.id}>
+                      {c.cart_number} ({c.status})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            ) : (
+              <>
+                <Input value={newCartNumber} onChange={(e) => setNewCartNumber(e.target.value)}
+                  placeholder="e.g. CART-2026-045" />
+                <p className="text-xs text-slate-500">
+                  If a cart with this number exists, the document is added to it. Otherwise a new draft cart is created in your department.
+                </p>
+              </>
+            )}
           </div>
         </div>
         <DialogFooter>
