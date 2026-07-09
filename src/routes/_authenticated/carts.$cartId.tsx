@@ -64,7 +64,8 @@ function CartDetail() {
   const transition = useMutation({
     mutationFn: async ({ status, action, extra }: { status: CartStatus; action: string; extra?: any }) => {
       if (!user) throw new Error("not signed in");
-      const updates: any = { status, ...(extra ?? {}) };
+      const clearReason = action !== "reject" && action !== "retrieval_rejected" && action !== "return_rejected";
+      const updates: any = { status, ...(extra ?? {}), ...(clearReason ? { rejection_reason: null } : {}) };
       const { error: uErr } = await supabase.from("carts").update(updates).eq("id", cartId);
       if (uErr) throw uErr;
       await supabase.from("cart_approvals").insert({
