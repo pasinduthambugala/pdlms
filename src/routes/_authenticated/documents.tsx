@@ -186,7 +186,9 @@ function RegisterDocDialog({ onDone }: { onDone: () => void }) {
   const { data: user } = useCurrentUser();
   const { data: carts } = useEditableCarts();
 
+  const [cartMode, setCartMode] = useState<"existing" | "new">("existing");
   const [cartId, setCartId] = useState<string>("none");
+  const [newCartNumber, setNewCartNumber] = useState("");
   const [name, setName] = useState("");
   const [num, setNum] = useState("");
   const [retention, setRetention] = useState<string>("");
@@ -197,11 +199,52 @@ function RegisterDocDialog({ onDone }: { onDone: () => void }) {
   const mut = useMutation({
     mutationFn: async () => {
       if (!user) throw new Error("Not signed in");
-      const chosen = cartId !== "none" ? carts?.find((c: any) => c.id === cartId) : null;
-      const departmentId = chosen?.department_id ?? user.profile.department_id;
+      let resolvedCartId: string | null = null;
+      let departmentId: string | null = user.profile.department_id ?? null;
+
+      if (cartMode === "existing" && cartId !== "none") {
+        const chosen = carts?.find((c: any) => c.id === cartId);
+        if (chosen) {
+          resolvedCartId = chosen.id;
+          departmentId = chosen.department_id;
+        }
+      } else if (cartMode === "new" && newCartNumber.trim()) {
+        const trimmed = newCartNumber.trim();
+        // Check if a cart with this number already exists (globally unique)
+        const { data: existing, error: exErr } = await supabase
+          .from("carts")
+          .select("id, department_id, status")
+          .eq("cart_number", trimmed)
+          .maybeSingle();
+        if (exErr) throw exErr;
+        if (existing) {
+          resolvedCartId = existing.id;
+          departmentId = existing.department_id;
+        } else {
+          if (!departmentId) throw new Error("Your profile has no department assigned. Ask an admin.");
+          const { data: created, error: cErr } = await supabase
+            .from("carts")
+            .insert({
+              cart_number: trimmed,
+              department_id: departmentId,
+              created_by: user.userId,
+              status: "draft",
+              retention_days: 365 * 7,
+            })
+            .select("id, department_id")
+            .single();
+          if (cErr) throw cErr;
+          resolvedCartId = created.id;
+          departmentId = created.department_id;
+          await supabase.from("cart_approvals").insert({
+            cart_id: created.id, action: "create", actor_id: user.userId,
+          });
+        }
+      }
+
       if (!departmentId) throw new Error("Your profile has no department assigned. Ask an admin.");
       const { error } = await supabase.from("documents").insert({
-        cart_id: chosen ? chosen.id : null,
+        cart_id: resolvedCartId,
         document_name: name,
         document_number: num,
         retention_period: retention.trim() === "" ? null : parseInt(retention, 10),
@@ -215,13 +258,16 @@ function RegisterDocDialog({ onDone }: { onDone: () => void }) {
     },
     onSuccess: () => {
       toast.success("Document registered");
-      setName(""); setNum(""); setFileNum(""); setFileName(""); setCartId("none");
+      setName(""); setNum(""); setFileNum(""); setFileName("");
+      setCartId("none"); setNewCartNumber(""); setCartMode("existing");
       setRegDate(new Date());
       onDone();
     },
     onError: (e: any) => {
       const m = String(e.message);
-      if (m.includes("duplicate")) toast.error("Document number must be unique");
+      if (m.includes("documents_dept_docnum_key") || (m.includes("duplicate") && m.includes("document")))
+        toast.error("Document number already exists for this department");
+      else if (m.includes("carts_cart_number_key")) toast.error("Cart number already in use");
       else if (m.includes("capacity")) toast.error("Cart is at full capacity (60 documents)");
       else toast.error(m);
     },
@@ -272,19 +318,41 @@ function RegisterDocDialog({ onDone }: { onDone: () => void }) {
               </PopoverContent>
             </Popover>
           </div>
-          <div className="col-span-2">
+          <div className="col-span-2 space-y-2">
             <Label>Cart (optional — can be assigned later)</Label>
-            <Select value={cartId} onValueChange={setCartId}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="none">No cart (assign later)</SelectItem>
-                {carts?.map((c: any) => (
-                  <SelectItem key={c.id} value={c.id}>
-                    {c.cart_number} ({c.status})
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <div className="flex gap-2 text-xs">
+              <button type="button"
+                className={cn("px-3 py-1 rounded-md border", cartMode === "existing" ? "bg-slate-900 text-white border-slate-900" : "bg-white text-slate-600 border-slate-200")}
+                onClick={() => setCartMode("existing")}>
+                Choose existing
+              </button>
+              <button type="button"
+                className={cn("px-3 py-1 rounded-md border", cartMode === "new" ? "bg-slate-900 text-white border-slate-900" : "bg-white text-slate-600 border-slate-200")}
+                onClick={() => setCartMode("new")}>
+                Enter cart number
+              </button>
+            </div>
+            {cartMode === "existing" ? (
+              <Select value={cartId} onValueChange={setCartId}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">No cart (assign later)</SelectItem>
+                  {carts?.map((c: any) => (
+                    <SelectItem key={c.id} value={c.id}>
+                      {c.cart_number} ({c.status})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            ) : (
+              <>
+                <Input value={newCartNumber} onChange={(e) => setNewCartNumber(e.target.value)}
+                  placeholder="e.g. CART-2026-045" />
+                <p className="text-xs text-slate-500">
+                  If a cart with this number exists, the document is added to it. Otherwise a new draft cart is created in your department.
+                </p>
+              </>
+            )}
           </div>
         </div>
         <DialogFooter>

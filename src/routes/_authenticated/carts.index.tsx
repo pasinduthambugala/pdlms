@@ -141,7 +141,17 @@ function CartsList() {
                   <td className="px-4 py-3 text-slate-600">{c.departments?.name ?? "—"}</td>
                   <td className="px-4 py-3 text-slate-600">{count}/60</td>
                   <td className="px-4 py-3 text-slate-600">{pct}%</td>
-                  <td className="px-4 py-3"><StatusBadge status={c.status} /></td>
+                  <td className="px-4 py-3">
+                    <div className="flex items-center gap-2">
+                      <StatusBadge status={c.status} />
+                      {c.rejection_reason && (
+                        <span title={c.rejection_reason}
+                          className="text-[10px] font-semibold uppercase px-2 py-0.5 rounded bg-rose-100 text-rose-700 border border-rose-200">
+                          Rejected
+                        </span>
+                      )}
+                    </div>
+                  </td>
                   <td className="px-4 py-3 text-slate-500">
                     {new Date(c.updated_at ?? c.created_at).toLocaleDateString()}
                   </td>

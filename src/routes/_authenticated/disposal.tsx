@@ -16,8 +16,10 @@ export const Route = createFileRoute("/_authenticated/disposal")({
 });
 
 function Disposal() {
-  const [from, setFrom] = useState<Date | undefined>();
-  const [to, setTo] = useState<Date | undefined>();
+  const [upFrom, setUpFrom] = useState<Date | undefined>();
+  const [upTo, setUpTo] = useState<Date | undefined>();
+  const [hFrom, setHFrom] = useState<Date | undefined>();
+  const [hTo, setHTo] = useState<Date | undefined>();
 
   const upcomingQ = useQuery({
     queryKey: ["disposal-upcoming"],
@@ -58,50 +60,50 @@ function Disposal() {
     return list.filter((c: any) => {
       const d = c.disposal_date ? new Date(c.disposal_date) : null;
       if (!d) return false;
-      if (from && d < from) return false;
-      if (to && d > new Date(to.getTime() + 86400000)) return false;
-      // Default view when no range: next 14 days
-      if (!from && !to) {
+      if (upFrom && d < upFrom) return false;
+      if (upTo && d > new Date(upTo.getTime() + 86400000)) return false;
+      if (!upFrom && !upTo) {
         const in14 = new Date(Date.now() + 14 * 86400000);
         return d <= in14;
       }
       return true;
     });
-  }, [upcomingQ.data, from, to]);
+  }, [upcomingQ.data, upFrom, upTo]);
 
   const history = useMemo(() => {
     const list = historyQ.data ?? [];
     return list.filter((r: any) => {
       const d = new Date(r.created_at);
-      if (from && d < from) return false;
-      if (to && d > new Date(to.getTime() + 86400000)) return false;
+      if (hFrom && d < hFrom) return false;
+      if (hTo && d > new Date(hTo.getTime() + 86400000)) return false;
       return true;
     });
-  }, [historyQ.data, from, to]);
+  }, [historyQ.data, hFrom, hTo]);
 
   return (
     <div>
-      <header className="mb-6 flex items-center justify-between flex-wrap gap-3">
-        <div>
-          <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
-            <AlertTriangle className="w-5 h-5 text-amber-600" /> Disposal Alerts
-          </h1>
-          <p className="text-sm text-slate-500">
-            {from || to ? "Carts within selected date range." : "Carts reaching disposal date within 14 days."}
-          </p>
-        </div>
-        <div className="flex items-center gap-2">
-          <DateField label="From" value={from} onChange={setFrom} />
-          <DateField label="To" value={to} onChange={setTo} />
-          {(from || to) && (
-            <Button size="sm" variant="ghost" onClick={() => { setFrom(undefined); setTo(undefined); }}>Clear</Button>
-          )}
-        </div>
+      <header className="mb-6">
+        <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
+          <AlertTriangle className="w-5 h-5 text-amber-600" /> Disposal Alerts
+        </h1>
+        <p className="text-sm text-slate-500">Track carts due for disposal and past disposals.</p>
       </header>
 
       <Card className="overflow-hidden mb-6">
-        <div className="px-4 py-3 border-b border-slate-100 font-semibold text-slate-800">
-          Upcoming disposals
+        <div className="px-4 py-3 border-b border-slate-100 flex items-center justify-between flex-wrap gap-3">
+          <div>
+            <div className="font-semibold text-slate-800">Upcoming disposals</div>
+            <div className="text-xs text-slate-500">
+              {upFrom || upTo ? "Carts within selected date range." : "Carts reaching disposal date within 14 days."}
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <DateField label="From" value={upFrom} onChange={setUpFrom} />
+            <DateField label="To" value={upTo} onChange={setUpTo} />
+            {(upFrom || upTo) && (
+              <Button size="sm" variant="ghost" onClick={() => { setUpFrom(undefined); setUpTo(undefined); }}>Clear</Button>
+            )}
+          </div>
         </div>
         <table className="w-full text-sm">
           <thead className="bg-slate-50 text-slate-600 text-xs uppercase">
@@ -132,8 +134,20 @@ function Disposal() {
       </Card>
 
       <Card className="overflow-hidden">
-        <div className="px-4 py-3 border-b border-slate-100 font-semibold text-slate-800">
-          Disposal history
+        <div className="px-4 py-3 border-b border-slate-100 flex items-center justify-between flex-wrap gap-3">
+          <div>
+            <div className="font-semibold text-slate-800">Disposal history</div>
+            <div className="text-xs text-slate-500">
+              {hFrom || hTo ? "Disposals within selected date range." : "All recorded disposals."}
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <DateField label="From" value={hFrom} onChange={setHFrom} />
+            <DateField label="To" value={hTo} onChange={setHTo} />
+            {(hFrom || hTo) && (
+              <Button size="sm" variant="ghost" onClick={() => { setHFrom(undefined); setHTo(undefined); }}>Clear</Button>
+            )}
+          </div>
         </div>
         <table className="w-full text-sm">
           <thead className="bg-slate-50 text-slate-600 text-xs uppercase">

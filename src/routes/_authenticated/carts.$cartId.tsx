@@ -64,7 +64,8 @@ function CartDetail() {
   const transition = useMutation({
     mutationFn: async ({ status, action, extra }: { status: CartStatus; action: string; extra?: any }) => {
       if (!user) throw new Error("not signed in");
-      const updates: any = { status, ...(extra ?? {}) };
+      const clearReason = action !== "reject" && action !== "retrieval_rejected" && action !== "return_rejected";
+      const updates: any = { status, ...(extra ?? {}), ...(clearReason ? { rejection_reason: null } : {}) };
       const { error: uErr } = await supabase.from("carts").update(updates).eq("id", cartId);
       if (uErr) throw uErr;
       await supabase.from("cart_approvals").insert({
@@ -102,6 +103,21 @@ function CartDetail() {
           </div>
         </div>
       </header>
+
+      {cart.rejection_reason && (
+        <Card className="p-4 mb-6 border-rose-200 bg-rose-50">
+          <div className="flex items-start gap-3">
+            <div className="text-rose-600 font-semibold text-sm">Latest approval was rejected</div>
+          </div>
+          <div className="mt-1 text-sm text-rose-800">
+            <span className="font-medium">Reason:</span> {cart.rejection_reason}
+          </div>
+          <div className="mt-1 text-xs text-rose-700">
+            Update the cart as needed and resubmit for approval.
+          </div>
+        </Card>
+      )}
+
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 space-y-6">
