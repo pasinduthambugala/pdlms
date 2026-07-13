@@ -14,6 +14,30 @@ export type Database = {
   }
   public: {
     Tables: {
+      app_settings: {
+        Row: {
+          created_at: string
+          id: boolean
+          last_daily_sent_at: string | null
+          provider_email: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: boolean
+          last_daily_sent_at?: string | null
+          provider_email?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: boolean
+          last_daily_sent_at?: string | null
+          provider_email?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       audit_log: {
         Row: {
           action: string
@@ -225,16 +249,19 @@ export type Database = {
           created_at: string
           id: string
           name: string
+          theme_color: string | null
         }
         Insert: {
           created_at?: string
           id?: string
           name: string
+          theme_color?: string | null
         }
         Update: {
           created_at?: string
           id?: string
           name?: string
+          theme_color?: string | null
         }
         Relationships: []
       }
