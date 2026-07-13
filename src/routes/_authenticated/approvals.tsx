@@ -381,3 +381,26 @@ function formatAction(a: string) {
   };
   return map[a] ?? a;
 }
+
+function RetrievalTabLabel({ user, scopeAll }: { user: any; scopeAll: boolean }) {
+  const q = useQuery({
+    queryKey: ["urgent-pending-count", user.userId, scopeAll],
+    refetchInterval: 15000,
+    queryFn: async () => {
+      let query = supabase
+        .from("carts")
+        .select("id", { count: "exact", head: true })
+        .eq("status", "pending_retrieval_approval")
+        .eq("retrieval_type", "urgent");
+      if (!scopeAll) query = query.eq("department_id", user.profile.department_id);
+      const { count } = await query;
+      return count ?? 0;
+    },
+  });
+  const hasUrgent = (q.data ?? 0) > 0;
+  return (
+    <span className={hasUrgent ? "urgent-blink px-2 py-0.5 font-semibold" : ""}>
+      Retrieval Approval{hasUrgent ? ` · ${q.data} URGENT` : ""}
+    </span>
+  );
+}
