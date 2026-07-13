@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { Eye, EyeOff } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useCurrentUser } from "@/hooks/use-current-user";
 import { Card } from "@/components/ui/card";
@@ -9,6 +10,19 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { ROLE_LABELS } from "@/lib/types";
+
+function PwField({ id, value, onChange }: { id: string; value: string; onChange: (v: string) => void }) {
+  const [show, setShow] = useState(false);
+  return (
+    <div className="relative">
+      <Input id={id} type={show ? "text" : "password"} value={value} onChange={(e) => onChange(e.target.value)} minLength={6} className="pr-10" />
+      <button type="button" onClick={() => setShow((s) => !s)} className="absolute inset-y-0 right-2 flex items-center text-slate-500 hover:text-slate-800"
+        aria-label={show ? "Hide password" : "Show password"}>
+        {show ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+      </button>
+    </div>
+  );
+}
 
 export const Route = createFileRoute("/_authenticated/profile")({
   head: () => ({ meta: [{ title: "My Profile — PDLMS" }] }),
@@ -124,11 +138,11 @@ function ProfilePage() {
         <h2 className="font-semibold text-slate-900">Change password</h2>
         <div>
           <Label htmlFor="pw">New password</Label>
-          <Input id="pw" type="password" value={pw} onChange={(e) => setPw(e.target.value)} minLength={6} />
+          <PwField id="pw" value={pw} onChange={setPw} />
         </div>
         <div>
           <Label htmlFor="pw2">Confirm new password</Label>
-          <Input id="pw2" type="password" value={pw2} onChange={(e) => setPw2(e.target.value)} minLength={6} />
+          <PwField id="pw2" value={pw2} onChange={setPw2} />
         </div>
         <Button onClick={changePassword} disabled={pwSaving || !pw}>
           {pwSaving ? "Updating…" : "Update password"}

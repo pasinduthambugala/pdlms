@@ -24,6 +24,7 @@ import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/
 import { Route as AuthenticatedCartsIndexRouteImport } from './routes/_authenticated/carts.index'
 import { Route as AuthenticatedCartsNewRouteImport } from './routes/_authenticated/carts.new'
 import { Route as AuthenticatedCartsCartIdRouteImport } from './routes/_authenticated/carts.$cartId'
+import { Route as ApiPublicHooksUrgentRetrievalRouteImport } from './routes/api/public/hooks/urgent-retrieval'
 import { Route as ApiPublicHooksStorageNotificationRouteImport } from './routes/api/public/hooks/storage-notification'
 import { Route as ApiPublicHooksDisposalAlertsRouteImport } from './routes/api/public/hooks/disposal-alerts'
 
@@ -102,6 +103,12 @@ const AuthenticatedCartsCartIdRoute =
     path: '/carts/$cartId',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const ApiPublicHooksUrgentRetrievalRoute =
+  ApiPublicHooksUrgentRetrievalRouteImport.update({
+    id: '/api/public/hooks/urgent-retrieval',
+    path: '/api/public/hooks/urgent-retrieval',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicHooksStorageNotificationRoute =
   ApiPublicHooksStorageNotificationRouteImport.update({
     id: '/api/public/hooks/storage-notification',
@@ -132,6 +139,7 @@ export interface FileRoutesByFullPath {
   '/carts/': typeof AuthenticatedCartsIndexRoute
   '/api/public/hooks/disposal-alerts': typeof ApiPublicHooksDisposalAlertsRoute
   '/api/public/hooks/storage-notification': typeof ApiPublicHooksStorageNotificationRoute
+  '/api/public/hooks/urgent-retrieval': typeof ApiPublicHooksUrgentRetrievalRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -150,6 +158,7 @@ export interface FileRoutesByTo {
   '/carts': typeof AuthenticatedCartsIndexRoute
   '/api/public/hooks/disposal-alerts': typeof ApiPublicHooksDisposalAlertsRoute
   '/api/public/hooks/storage-notification': typeof ApiPublicHooksStorageNotificationRoute
+  '/api/public/hooks/urgent-retrieval': typeof ApiPublicHooksUrgentRetrievalRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -170,6 +179,7 @@ export interface FileRoutesById {
   '/_authenticated/carts/': typeof AuthenticatedCartsIndexRoute
   '/api/public/hooks/disposal-alerts': typeof ApiPublicHooksDisposalAlertsRoute
   '/api/public/hooks/storage-notification': typeof ApiPublicHooksStorageNotificationRoute
+  '/api/public/hooks/urgent-retrieval': typeof ApiPublicHooksUrgentRetrievalRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -190,6 +200,7 @@ export interface FileRouteTypes {
     | '/carts/'
     | '/api/public/hooks/disposal-alerts'
     | '/api/public/hooks/storage-notification'
+    | '/api/public/hooks/urgent-retrieval'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -208,6 +219,7 @@ export interface FileRouteTypes {
     | '/carts'
     | '/api/public/hooks/disposal-alerts'
     | '/api/public/hooks/storage-notification'
+    | '/api/public/hooks/urgent-retrieval'
   id:
     | '__root__'
     | '/'
@@ -227,6 +239,7 @@ export interface FileRouteTypes {
     | '/_authenticated/carts/'
     | '/api/public/hooks/disposal-alerts'
     | '/api/public/hooks/storage-notification'
+    | '/api/public/hooks/urgent-retrieval'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -235,6 +248,7 @@ export interface RootRouteChildren {
   AuthRoute: typeof AuthRoute
   ApiPublicHooksDisposalAlertsRoute: typeof ApiPublicHooksDisposalAlertsRoute
   ApiPublicHooksStorageNotificationRoute: typeof ApiPublicHooksStorageNotificationRoute
+  ApiPublicHooksUrgentRetrievalRoute: typeof ApiPublicHooksUrgentRetrievalRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -344,6 +358,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedCartsCartIdRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/api/public/hooks/urgent-retrieval': {
+      id: '/api/public/hooks/urgent-retrieval'
+      path: '/api/public/hooks/urgent-retrieval'
+      fullPath: '/api/public/hooks/urgent-retrieval'
+      preLoaderRoute: typeof ApiPublicHooksUrgentRetrievalRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/hooks/storage-notification': {
       id: '/api/public/hooks/storage-notification'
       path: '/api/public/hooks/storage-notification'
@@ -401,6 +422,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicHooksDisposalAlertsRoute: ApiPublicHooksDisposalAlertsRoute,
   ApiPublicHooksStorageNotificationRoute:
     ApiPublicHooksStorageNotificationRoute,
+  ApiPublicHooksUrgentRetrievalRoute: ApiPublicHooksUrgentRetrievalRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

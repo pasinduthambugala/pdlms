@@ -1,11 +1,12 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Trash2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { useCurrentUser } from "@/hooks/use-current-user";
 import { toast } from "sonner";
 import { ROLE_LABELS, type AppRole } from "@/lib/types";
@@ -40,7 +41,7 @@ function Admin() {
   });
 
   const depsQ = useQuery({
-    queryKey: ["departments"],
+    queryKey: ["departments-admin"],
     queryFn: async () => (await supabase.from("departments").select("*").order("name")).data ?? [],
   });
 
@@ -49,8 +50,19 @@ function Admin() {
     queryFn: async () => (await supabase.from("job_titles").select("*").order("name")).data ?? [],
   });
 
+  const settingsQ = useQuery({
+    queryKey: ["app-settings"],
+    enabled: isAdmin,
+    queryFn: async () => (await supabase.from("app_settings").select("*").eq("id", true).maybeSingle()).data,
+  });
+
   const [newDept, setNewDept] = useState("");
   const [newJob, setNewJob] = useState("");
+  const [providerEmail, setProviderEmail] = useState("");
+
+  useEffect(() => {
+    if (settingsQ.data) setProviderEmail((settingsQ.data as any).provider_email ?? "");
+  }, [settingsQ.data]);
 
   if (!isAdmin) {
     return <div className="text-slate-500">Only Super Admins can access this page.</div>;
@@ -73,7 +85,7 @@ function Admin() {
     if (!confirm(`Delete department "${name}"? Users/carts referencing it may block deletion.`)) return;
     const { error } = await supabase.from("departments").delete().eq("id", id);
     if (error) toast.error(error.message);
-    else { toast.success("Department deleted"); qc.invalidateQueries({ queryKey: ["departments"] }); }
+    else { toast.success("Department deleted"); qc.invalidateQueries({ queryKey: ["departments-admin"] }); }
   };
 
   const deleteJob = async (id: string, name: string) => {
@@ -83,6 +95,24 @@ function Admin() {
     else { toast.success("Role deleted"); qc.invalidateQueries({ queryKey: ["job-titles"] }); }
   };
 
+  const setDeptColor = async (id: string, color: string | null) => {
+    const { error } = await supabase.from("departments").update({ theme_color: color }).eq("id", id);
+    if (error) toast.error(error.message);
+    else { toast.success("Theme color updated"); qc.invalidateQueries({ queryKey: ["departments-admin"] }); qc.invalidateQueries({ queryKey: ["dept-theme"] }); }
+  };
+
+  const saveProviderEmail = async () => {
+    const email = providerEmail.trim();
+    if (email && !/^\S+@\S+\.\S+$/.test(email)) return toast.error("Enter a valid email");
+    const { error } = await supabase
+      .from("app_settings")
+      .update({ provider_email: email || null, updated_at: new Date().toISOString() })
+      .eq("id", true);
+    if (error) return toast.error(error.message);
+    toast.success("Provider email saved");
+    qc.invalidateQueries({ queryKey: ["app-settings"] });
+  };
+
   return (
     <div>
       <header className="mb-6">
@@ -90,13 +120,52 @@ function Admin() {
         <p className="text-sm text-slate-500">Activate users, assign roles & departments, manage lookups.</p>
       </header>
 
+      <Card className="p-6 mb-6">
+        <h2 className="font-semibold text-slate-900 mb-1">Storage provider email</h2>
+        <p className="text-xs text-slate-500 mb-3">
+          Daily digest of approved carts &amp; normal retrievals is sent to this address at <strong>3:00 PM</strong> (only if there is new activity since the last send).
+          Urgent retrievals are emailed immediately with a PDF attachment after approval.
+        </p>
+        <div className="flex gap-2 max-w-lg">
+          <Input type="email" placeholder="provider@example.com" value={providerEmail} onChange={(e) => setProviderEmail(e.target.value)} />
+          <Button onClick={saveProviderEmail}>Save</Button>
+        </div>
+        {settingsQ.data && (settingsQ.data as any).last_daily_sent_at && (
+          <p className="text-xs text-slate-500 mt-2">
+            Last daily send: {new Date((settingsQ.data as any).last_daily_sent_at).toLocaleString()}
+          </p>
+        )}
+      </Card>
+
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
         <Card className="p-6">
           <h2 className="font-semibold mb-3">Departments</h2>
-          <ul className="space-y-1 text-sm mb-3">
+          <ul className="space-y-2 text-sm mb-3">
             {depsQ.data?.map((d: any) => (
-              <li key={d.id} className="flex items-center justify-between text-slate-700">
-                <span>{d.name}</span>
+              <li key={d.id} className="flex items-center justify-between text-slate-700 gap-2">
+                <span className="flex items-center gap-2 flex-1 min-w-0">
+                  <span
+                    className="w-4 h-4 rounded border border-slate-300 shrink-0"
+                    style={{ backgroundColor: d.theme_color ?? "transparent" }}
+                    title={d.theme_color ?? "Default"}
+                  />
+                  <span className="truncate">{d.name}</span>
+                </span>
+                <input
+                  type="color"
+                  value={d.theme_color ?? "#f8fafc"}
+                  onChange={(e) => setDeptColor(d.id, e.target.value)}
+                  className="w-8 h-6 border rounded cursor-pointer"
+                  title="Pick theme color"
+                />
+                <label className="inline-flex items-center gap-1 text-xs text-slate-600">
+                  <input
+                    type="checkbox"
+                    checked={!d.theme_color}
+                    onChange={(e) => setDeptColor(d.id, e.target.checked ? null : (d.theme_color ?? "#f1f5f9"))}
+                  />
+                  Default
+                </label>
                 <button onClick={() => deleteDept(d.id, d.name)} className="text-red-600 hover:text-red-700">
                   <Trash2 className="w-4 h-4" />
                 </button>
@@ -108,7 +177,7 @@ function Admin() {
             if (!newDept) return;
             const { error } = await supabase.from("departments").insert({ name: newDept });
             if (error) return toast.error(error.message);
-            setNewDept(""); qc.invalidateQueries({ queryKey: ["departments"] });
+            setNewDept(""); qc.invalidateQueries({ queryKey: ["departments-admin"] });
           }}>
             <Input value={newDept} onChange={(e) => setNewDept(e.target.value)} placeholder="New department" />
             <Button type="submit">Add</Button>
@@ -174,6 +243,9 @@ function Admin() {
                     <option value="">—</option>
                     {depsQ.data?.map((d: any) => <option key={d.id} value={d.id}>{d.name}</option>)}
                   </select>
+                  <div className="text-xs text-slate-500 mt-1">
+                    Current: {u.departments?.name ?? "—"}
+                  </div>
                 </td>
                 <td className="px-4 py-2">
                   <select className="border border-slate-200 rounded px-2 py-1 text-sm"
@@ -181,6 +253,9 @@ function Admin() {
                     onChange={(e) => setUserRole(u.id, e.target.value as AppRole)}>
                     {ROLES.map((r) => <option key={r} value={r}>{ROLE_LABELS[r]}</option>)}
                   </select>
+                  <div className="text-xs text-slate-500 mt-1">
+                    Current: {u.roles.map((r: AppRole) => ROLE_LABELS[r]).join(", ") || "—"}
+                  </div>
                 </td>
                 <td className="px-4 py-2">
                   <label className="inline-flex items-center gap-2">
@@ -197,4 +272,3 @@ function Admin() {
     </div>
   );
 }
-
