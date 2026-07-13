@@ -1,6 +1,7 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { Eye, EyeOff } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,9 +11,36 @@ import { toast } from "sonner";
 
 export const Route = createFileRoute("/auth")({
   ssr: false,
-  head: () => ({ meta: [{ title: "Sign in — PDLMS" }] }),
+  head: () => ({ meta: [{ title: "Sign in — DARMS" }] }),
   component: AuthPage,
 });
+
+function PasswordInput({
+  id, value, onChange, minLength,
+}: { id: string; value: string; onChange: (v: string) => void; minLength?: number }) {
+  const [show, setShow] = useState(false);
+  return (
+    <div className="relative">
+      <Input
+        id={id}
+        type={show ? "text" : "password"}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        required
+        minLength={minLength}
+        className="pr-10"
+      />
+      <button
+        type="button"
+        onClick={() => setShow((s) => !s)}
+        aria-label={show ? "Hide password" : "Show password"}
+        className="absolute inset-y-0 right-2 flex items-center text-slate-500 hover:text-slate-800"
+      >
+        {show ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+      </button>
+    </div>
+  );
+}
 
 function AuthPage() {
   const [mode, setMode] = useState<"signin" | "signup">("signin");
@@ -100,7 +128,7 @@ function AuthPage() {
               </div>
               <div>
                 <Label htmlFor="confirmPassword">Confirm Password</Label>
-                <Input id="confirmPassword" type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} required minLength={6} />
+                <PasswordInput id="confirmPassword" value={confirmPassword} onChange={setConfirmPassword} minLength={6} />
               </div>
             </>
           )}
@@ -110,7 +138,7 @@ function AuthPage() {
           </div>
           <div>
             <Label htmlFor="password">Password</Label>
-            <Input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required minLength={6} />
+            <PasswordInput id="password" value={password} onChange={setPassword} minLength={6} />
           </div>
           <Button type="submit" className="w-full" disabled={loading}>
             {loading ? "Please wait…" : mode === "signin" ? "Sign in" : "Create account"}

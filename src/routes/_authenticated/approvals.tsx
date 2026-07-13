@@ -87,7 +87,9 @@ function ApprovalsPage() {
         <Tabs defaultValue="cart">
           <TabsList>
             <TabsTrigger value="cart">Cart Approval</TabsTrigger>
-            <TabsTrigger value="retrieval">Retrieval Approval</TabsTrigger>
+            <TabsTrigger value="retrieval">
+              <RetrievalTabLabel user={user} scopeAll={scopeAll} />
+            </TabsTrigger>
           </TabsList>
           <TabsContent value="cart">
             <PendingTable user={user} specs={CART_APPROVALS} scopeAll={scopeAll} from={from} to={to} kind="cart" />
